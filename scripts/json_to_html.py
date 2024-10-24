@@ -130,7 +130,8 @@ def create_benchmark_page(json_file, output_dir, run_id):
 
     # Median execution time plot
     fig2 = go.Figure()
-    for idx, version in enumerate(sorted_versions):
+    for version in sorted_versions:
+        version_type = versions_info.get('metadata', {}).get(version, {}).get('type', 'release')
         metrics = version_data[version]
         fig2.add_trace(go.Bar(
             name=version,
@@ -138,7 +139,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
             x=metrics['medians'],
             error_x=dict(type='data', array=metrics['stddevs']),
             orientation='h',
-            marker_color=colors[idx % len(colors)]
+            marker_color=colors[version_type]  # Use type-based colors consistently
         ))
 
     fig2.update_layout(
