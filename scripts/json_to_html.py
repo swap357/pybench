@@ -10,6 +10,17 @@ def create_benchmark_page(json_file, output_dir, run_id):
     """Create a detailed benchmark page for a specific run"""
     with open(json_file, 'r') as f:
         data = json.load(f)
+        
+    # Debug: Print structure
+    print("Data keys:", data.keys())
+    print("\nResults keys:", data['results'].keys())
+    for test_name, test_data in data['results'].items():
+        if test_name != 'versions_info':
+            print(f"\nTest {test_name} keys:", test_data.keys())
+            for version, metrics in test_data.items():
+                print(f"Version {version} keys:", metrics.keys())
+                print(f"Statistical data:", metrics['statistical_data'])
+            break  # Just print first test for brevity
 
     # Get versions info from the results
     versions_info = data.get('versions_info', {})
@@ -64,18 +75,25 @@ def create_benchmark_page(json_file, output_dir, run_id):
     test_names = []
     version_data = {}
 
-    # Changed from data['benchmarks'] to data['results']
-    for test_name, test_data in data['results'].items():
-        test_names.append(test_name)
-        for version, metrics in test_data.items():
-            if version not in version_data:
-                version_data[version] = {'medians': [], 'stddevs': [], 'relative_perfs': []}
-            # Access statistical_data for metrics
-            stats = metrics['statistical_data']
-            version_data[version]['medians'].append(stats['median'])
-            version_data[version]['stddevs'].append(stats['stddev'])
-            relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
-            version_data[version]['relative_perfs'].append(relative_perf)
+    # Process results correctly
+    results = data['results']
+    for test_name, test_data in results.items():
+        if test_name != 'versions_info':  # Skip the versions_info entry
+            test_names.append(test_name)
+            for version, metrics in test_data.items():
+                if version not in version_data:
+                    version_data[version] = {'medians': [], 'stddevs': [], 'relative_perfs': []}
+                
+                # Access statistical_data correctly
+                stats = metrics.get('statistical_data', {})
+                version_data[version]['medians'].append(stats.get('median', 0))
+                version_data[version]['stddevs'].append(stats.get('stddev', 0))
+                
+                # Handle relative performance
+                relative_perf = 100
+                if metrics.get('relative_performance'):
+                    relative_perf = float(metrics['relative_performance'].strip('%'))
+                version_data[version]['relative_perfs'].append(relative_perf)
 
     # Create plots using versions from data
     colors = {
@@ -142,36 +160,37 @@ def create_benchmark_page(json_file, output_dir, run_id):
     # Add detailed statistics table
     html_content += "<h2>Detailed Statistics</h2><table>"
 
-    for test_name, test_data in data['results'].items():
-        html_content += f"""
-        <tr class="header">
-            <td colspan="7">{test_name}</td>
-        </tr>
-        <tr>
-            <th>Python Version</th>
-            <th>Median</th>
-            <th>Stddev</th>
-            <th>Mean</th>
-            <th>Min</th>
-            <th>Max</th>
-            <th>Execution Time Increase</th>
-        </tr>
-        """
-        for version, metrics in test_data.items():
-            stats = metrics['statistical_data']
-            row_class = "baseline" if metrics.get('relative_performance') is None else ""
-            relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
+    for test_name, test_data in results.items():
+        if test_name != 'versions_info':  # Skip the versions_info entry
             html_content += f"""
-            <tr class="{row_class}">
-                <td>{version}</td>
-                <td>{stats['median']:.4f}</td>
-                <td>{stats['stddev']:.4f}</td>
-                <td>{stats['mean']:.4f}</td>
-                <td>{stats['min']:.4f}</td>
-                <td>{stats['max']:.4f}</td>
-                <td>{relative_perf:.2f}%</td>
+            <tr class="header">
+                <td colspan="7">{test_name}</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
             </tr>
             """
+            for version, metrics in test_data.items():
+                stats = metrics['statistical_data']
+                row_class = "baseline" if metrics.get('relative_performance') is None else ""
+                relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
+                html_content += f"""
+                <tr class="{row_class}">
+                    <td>{version}</td>
+                    <td>{stats['median']:.4f}</td>
+                    <td>{stats['stddev']:.4f}</td>
+                    <td>{stats['mean']:.4f}</td>
+                    <td>{stats['min']:.4f}</td>
+                    <td>{stats['max']:.4f}</td>
+                    <td>{relative_perf:.2f}%</td>
+                </tr>
+                """
 
     html_content += "</table></body></html>"
 
