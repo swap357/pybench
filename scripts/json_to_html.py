@@ -177,4 +177,4 @@ def json_to_html(json_file):
     return run_id
 
 if __name__ == "__main__":
-    json_to_html('benchmark_report.json')
+    json_to_html('benchmark_results.json')  # Changed from benchmark_report.json
