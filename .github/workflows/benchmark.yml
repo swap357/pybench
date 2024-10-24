@@ -19,10 +19,10 @@ jobs:
       
     - name: Install Python versions
       run: |
-        pyenv install 3.12.7
+        pyenv install 3.12
         pyenv install 3.13.0
         pyenv install 3.13.0t
-        pyenv global 3.12.7
+        pyenv global 3.12
         
     - name: Install dependencies
       run: |
