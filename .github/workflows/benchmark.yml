@@ -63,7 +63,7 @@ jobs:
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-        python benchmark_runner.py --profile detailed --report-format both
+        python benchmark_runner.py --profile basic --report-format both
       
     - name: Upload benchmark results
       uses: actions/upload-artifact@v3
