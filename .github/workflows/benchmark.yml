@@ -49,6 +49,25 @@ jobs:
         eval "$(pyenv init -)"
         pyenv --version
 
+    # First install a default Python version for running setup
+    - name: Install default Python
+      run: |
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        pyenv install 3.12.7
+        pyenv global 3.12.7
+
+    # Install dependencies first
+    - name: Install dependencies
+      run: |
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    # Now we can use the benchmark runner to get versions
     - name: Install Python versions
       run: |
         export PATH="$HOME/.pyenv/bin:$PATH"
@@ -72,14 +91,6 @@ jobs:
         BASELINE=$(python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
         pyenv global $BASELINE
         python --version
-
-    - name: Install dependencies
-      run: |
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
-        eval "$(pyenv init -)"
-        python -m pip install --upgrade pip
-        pip install -e .
 
     - name: Run benchmarks
       run: |
