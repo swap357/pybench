@@ -85,7 +85,7 @@ jobs:
 
     - name: Convert JSON to HTML
       run: |
-        python json_to_html.py
+        python scripts/json_to_html.py
 
     - name: Publish Benchmark Results to GitHub Pages
       run: |
