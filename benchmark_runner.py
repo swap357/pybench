@@ -32,14 +32,20 @@ class StatisticalResult:
     iterations: List[float]
 
 class BenchmarkRunner:
+    # Define interpreter versions here as a class variable
+    PYTHON_VERSIONS = {
+        "3.12.7": {"type": "baseline"},  # Marking baseline version
+        # "3.13.0": {"type": "release"},
+        "3.13.0t": {"type": "experimental"}
+    }
+    BASELINE_VERSION = "3.12.7"
+
     def __init__(self, iterations: int = 5, profile: bool = True):
         self.environments = [
-            PythonEnvironment("3.12.7"),
-            PythonEnvironment("3.13.0"),
-            PythonEnvironment("3.13.0t")
+            PythonEnvironment(version) for version in self.PYTHON_VERSIONS.keys()
         ]
         self.benchmark_dir = Path("benchmarks/tests")
-        self.baseline_version = "3.12.7"
+        self.baseline_version = self.BASELINE_VERSION
         self.console = Console()
         self.iterations = iterations
         self.profile = profile
@@ -65,9 +71,10 @@ class BenchmarkRunner:
         """Discover all benchmark modules in the benchmarks/tests directory."""
         benchmark_files = []
         categories = [
-            'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
-            'object/dict', 'object/list', 'object/string', 'interpreter/gil',
-            'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
+            'cpu/recursive'
+            # 'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
+            # 'object/dict', 'object/list', 'object/string', 'interpreter/gil',
+            # 'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
         ]
 
         for category in categories:
@@ -84,6 +91,14 @@ class BenchmarkRunner:
         )
 
         return benchmark_files
+
+    def get_versions_info(self):
+        """Return information about Python versions for other scripts"""
+        return {
+            "versions": list(self.PYTHON_VERSIONS.keys()),
+            "baseline": self.BASELINE_VERSION,
+            "metadata": self.PYTHON_VERSIONS
+        }
 
     def run_all(self) -> Dict[str, Dict]:
         """Run all discovered benchmarks and collect results."""
@@ -138,6 +153,7 @@ class BenchmarkRunner:
                 # Display results for the current benchmark
                 self.display_results({benchmark: results[benchmark]})
 
+        results['versions_info'] = self.get_versions_info()  # Add versions info to results
         return results
 
     def _process_benchmark_results(self, version_results: Dict) -> Dict:

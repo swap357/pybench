@@ -11,6 +11,11 @@ def create_benchmark_page(json_file, output_dir, run_id):
     with open(json_file, 'r') as f:
         data = json.load(f)
 
+    # Get versions info from the results
+    versions_info = data.get('versions_info', {})
+    sorted_versions = versions_info.get('versions', ['3.12.7', '3.13.0', '3.13.0t'])  # Fallback if not present
+    baseline_version = versions_info.get('baseline', '3.12.7')
+
     # Extract system information
     system_info = data['system_info']
     cpu_count = system_info['cpu_count']
@@ -59,30 +64,37 @@ def create_benchmark_page(json_file, output_dir, run_id):
     test_names = []
     version_data = {}
 
-    for test_name, test_data in data['benchmarks'].items():
+    # Changed from data['benchmarks'] to data['results']
+    for test_name, test_data in data['results'].items():
         test_names.append(test_name)
-        for version, metrics in test_data['summary'].items():
+        for version, metrics in test_data.items():
             if version not in version_data:
                 version_data[version] = {'medians': [], 'stddevs': [], 'relative_perfs': []}
-            version_data[version]['medians'].append(metrics['median'])
-            version_data[version]['stddevs'].append(metrics['stddev'])
-            relative_perf = 100 if metrics.get('relative_perf') is None else float(metrics['relative_perf'].strip('%'))
+            # Access statistical_data for metrics
+            stats = metrics['statistical_data']
+            version_data[version]['medians'].append(stats['median'])
+            version_data[version]['stddevs'].append(stats['stddev'])
+            relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
             version_data[version]['relative_perfs'].append(relative_perf)
 
-    # Create plots
-    colors = ['#757575', '#64b5f6', '#ffb74d']  # Grey for baseline
-    sorted_versions = ['3.12.7', '3.13.0', '3.13.0t']
+    # Create plots using versions from data
+    colors = {
+        'baseline': '#757575',
+        'release': '#64b5f6',
+        'experimental': '#ffb74d'
+    }
 
     # Execution time comparison plot
     fig1 = go.Figure()
-    for idx, version in enumerate(sorted_versions):
+    for version in sorted_versions:
+        version_type = versions_info.get('metadata', {}).get(version, {}).get('type', 'release')
         metrics = version_data[version]
         fig1.add_trace(go.Bar(
             name=version,
             y=test_names,
             x=metrics['relative_perfs'],
             orientation='h',
-            marker_color=colors[idx % len(colors)]
+            marker_color=colors[version_type]
         ))
 
     fig1.update_layout(
@@ -130,7 +142,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
     # Add detailed statistics table
     html_content += "<h2>Detailed Statistics</h2><table>"
 
-    for test_name, test_data in data['benchmarks'].items():
+    for test_name, test_data in data['results'].items():
         html_content += f"""
         <tr class="header">
             <td colspan="7">{test_name}</td>
@@ -145,17 +157,18 @@ def create_benchmark_page(json_file, output_dir, run_id):
             <th>Execution Time Increase</th>
         </tr>
         """
-        for version, metrics in test_data['summary'].items():
-            row_class = "baseline" if metrics.get('relative_perf') is None else ""
-            relative_perf = 100 if metrics.get('relative_perf') is None else float(metrics['relative_perf'].strip('%'))
+        for version, metrics in test_data.items():
+            stats = metrics['statistical_data']
+            row_class = "baseline" if metrics.get('relative_performance') is None else ""
+            relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
             html_content += f"""
             <tr class="{row_class}">
                 <td>{version}</td>
-                <td>{metrics['median']:.4f}</td>
-                <td>{metrics['stddev']:.4f}</td>
-                <td>{metrics['mean']:.4f}</td>
-                <td>{metrics['min']:.4f}</td>
-                <td>{metrics['max']:.4f}</td>
+                <td>{stats['median']:.4f}</td>
+                <td>{stats['stddev']:.4f}</td>
+                <td>{stats['mean']:.4f}</td>
+                <td>{stats['min']:.4f}</td>
+                <td>{stats['max']:.4f}</td>
                 <td>{relative_perf:.2f}%</td>
             </tr>
             """

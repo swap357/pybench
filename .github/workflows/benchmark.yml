@@ -55,17 +55,22 @@ jobs:
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
 
+        # Get Python versions from the runner
+        VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
+        
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
-          pyenv install 3.12.7 --force
-          pyenv install 3.13.0 --force
-          pyenv install 3.13.0t --force
+          for version in $VERSIONS; do
+            pyenv install $version --force
+          done
         else
-          pyenv install 3.12.7 || pyenv install 3.12.7 --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/3.12/Misc/NEWS.d/3.12.7.rst)
-          pyenv install 3.13.0 || pyenv install 3.13.0 --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/3.13/Misc/NEWS.d/3.13.0.rst)
-          pyenv install 3.13.0t || pyenv install 3.13.0t --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/nogil/Misc/NEWS.d/3.13.0.rst)
+          for version in $VERSIONS; do
+            pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
+          done
         fi
 
-        pyenv global 3.12.7
+        # Set global Python to baseline version
+        BASELINE=$(python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
+        pyenv global $BASELINE
         python --version
 
     - name: Install dependencies
