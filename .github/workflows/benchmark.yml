@@ -14,15 +14,27 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up pyenv
-      uses: gabrielfalcao/pyenv-action@v14
-      
+    - name: Install pyenv dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
+          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    
+    - name: Install pyenv
+      run: |
+        curl https://pyenv.run | bash
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+        echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+        echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+        source ~/.bashrc
+    
     - name: Install Python versions
       run: |
-        pyenv install 3.12
+        pyenv install 3.12.7
         pyenv install 3.13.0
         pyenv install 3.13.0t
-        pyenv global 3.12
+        pyenv global 3.12.7
         
     - name: Install dependencies
       run: |
@@ -30,10 +42,12 @@ jobs:
         pip install -e .
         
     - name: Run benchmarks
-      run: python benchmark_runner.py
+      run: python benchmark_runner.py --profile detailed --report-format both
       
     - name: Upload benchmark results
       uses: actions/upload-artifact@v3
       with:
         name: benchmark-results
-        path: benchmark_results.txt
+        path: |
+          benchmark_results.json
+          benchmark_report.json
