@@ -23,8 +23,11 @@ def create_benchmark_page(json_file, output_dir, run_id):
             break  # Just print first test for brevity
 
     # Get versions info from the results
-    versions_info = data.get('versions_info', {})
-    sorted_versions = versions_info.get('versions', ['3.12.7', '3.13.0', '3.13.0t'])  # Fallback if not present
+    versions_info = data['results'].get('versions_info', {})
+    # Get actual versions from the first benchmark's results
+    first_benchmark = next((v for k, v in data['results'].items() if k != 'versions_info'), {})
+    actual_versions = list(first_benchmark.keys())
+    sorted_versions = sorted(actual_versions, key=lambda v: (v != versions_info.get('baseline', '3.12.7'), v))  # Fallback if not present
     baseline_version = versions_info.get('baseline', '3.12.7')
 
     # Extract system information
