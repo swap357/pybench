@@ -79,11 +79,15 @@ jobs:
         
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
           for version in $VERSIONS; do
-            pyenv install $version --force
+            pyenv install -s $version --force
           done
         else
           for version in $VERSIONS; do
-            pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
+            if ! pyenv versions | grep -q $version; then
+              pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
+            else
+              echo "Python $version is already installed"
+            fi
           done
         fi
 
