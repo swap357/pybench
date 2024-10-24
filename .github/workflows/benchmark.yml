@@ -1,26 +1,41 @@
-name: Python Benchmark Suite
+name: Benchmark
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
+    inputs:
+      build_from_source:
+        description: 'Build Python from source'
+        required: false
+        default: 'false'
 
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
+
+    - name: Cache Python versions
+      uses: actions/cache@v4
+      with:
+        path: ~/.pyenv/versions
+        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pyenv-
+
     - name: Install pyenv dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-    
+
     - name: Install and configure pyenv
       run: |
         curl https://pyenv.run | bash
@@ -28,28 +43,31 @@ jobs:
         echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
         echo 'eval "$(pyenv init -)"' >> ~/.bashrc
         source ~/.bashrc
-        
-        # Verify pyenv installation
+
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
         pyenv --version
-    
+
     - name: Install Python versions
       run: |
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-        
-        # Install Python versions
-        pyenv install 3.12.7 || pyenv install 3.12.7 --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/3.12/Misc/NEWS.d/3.12.7.rst)
-        pyenv install 3.13.0 || pyenv install 3.13.0 --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/3.13/Misc/NEWS.d/3.13.0.rst)
-        pyenv install 3.13.0t || pyenv install 3.13.0t --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/nogil/Misc/NEWS.d/3.13.0.rst)
-        
-        # Set global Python version
+
+        if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
+          pyenv install 3.12.7 --force
+          pyenv install 3.13.0 --force
+          pyenv install 3.13.0t --force
+        else
+          pyenv install 3.12.7 || pyenv install 3.12.7 --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/3.12/Misc/NEWS.d/3.12.7.rst)
+          pyenv install 3.13.0 || pyenv install 3.13.0 --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/3.13/Misc/NEWS.d/3.13.0.rst)
+          pyenv install 3.13.0t || pyenv install 3.13.0t --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/nogil/Misc/NEWS.d/3.13.0.rst)
+        fi
+
         pyenv global 3.12.7
         python --version
-        
+
     - name: Install dependencies
       run: |
         export PATH="$HOME/.pyenv/bin:$PATH"
@@ -57,18 +75,24 @@ jobs:
         eval "$(pyenv init -)"
         python -m pip install --upgrade pip
         pip install -e .
-        
+
     - name: Run benchmarks
       run: |
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
         python benchmark_runner.py --profile basic --report-format both
-      
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
-      with:
-        name: benchmark-results
-        path: |
-          benchmark_results.json
-          benchmark_report.json
+
+    - name: Convert JSON to HTML
+      run: |
+        python json_to_html.py
+
+    - name: Publish Benchmark Results to GitHub Pages
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git checkout gh-pages
+        cp index.html .
+        git add index.html
+        git commit -m "Update benchmark results"
+        git push origin gh-pages
