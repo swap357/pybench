@@ -126,11 +126,7 @@ jobs:
     - name: Generate Benchmark Report
       run: |
         ls -l  # Debug: verify files before running script
-        python scripts/json_to_html.py
-
-    - name: Update Index Page
-      run: |
-        python scripts/update_index.py
+        python scripts/json_to_html.py --input-file benchmark_results.json --output-dir /tmp/benchmark_results
 
     - name: Publish Benchmark Results to GitHub Pages
       env:
@@ -139,10 +135,12 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Save current files to temp location
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        mkdir -p /tmp/benchmark_results
-        cp benchmark_results.json "/tmp/benchmark_results/${TIMESTAMP}.json"
+        # Save scripts we'll need
+        cp -r scripts /tmp/benchmark_results/
+        
+        # Debug: Show what we saved
+        echo "Contents of /tmp/benchmark_results:"
+        ls -la /tmp/benchmark_results/
         
         # Clean working directory
         git clean -fd
@@ -151,10 +149,10 @@ jobs:
         git fetch origin gh-pages || true
         
         if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-          # Branch exists - check it out
+          echo "Checking out existing gh-pages branch"
           git checkout gh-pages
         else
-          # Create new branch
+          echo "Creating new gh-pages branch"
           git checkout --orphan gh-pages
           git rm -rf .
           mkdir -p runs
@@ -194,18 +192,30 @@ jobs:
           EOL
         fi
         
-        # Copy new benchmark results
-        mkdir -p runs
-        cp "/tmp/benchmark_results/${TIMESTAMP}.json" "runs/"
+        # Debug: Show current directory contents
+        echo "Contents after checkout:"
+        ls -la
+        
+        # Copy back the scripts and new results
+        mkdir -p runs scripts
+        cp -r /tmp/benchmark_results/scripts/* scripts/
+        cp -r /tmp/benchmark_results/*.{json,html} runs/ || true
+        
+        # Debug: Show contents before running update script
+        echo "Contents before running update script:"
+        ls -la
+        ls -la scripts/
+        ls -la runs/
         
         # Update index.html with new run
-        python scripts/update_index.py
+        python scripts/update_index.py --input-file "runs/$(ls -t runs/*.json | head -1)" --index-file index.html
         
         # Clean up unnecessary files
         rm -rf __pycache__
         rm -rf *.pyc
         rm -rf python_benchmark_suite.egg-info
         rm -f benchmark_results.json
+        rm -rf scripts  # Remove scripts after we're done
         
         # Stage all changes
         git add -A

@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
+import argparse
 
 def extract_existing_runs(html_file):
     """Extract existing run information from current index.html"""
@@ -92,4 +93,9 @@ def update_index_page(json_file='benchmark_results.json', index_file='index.html
         f.write(str(soup))
 
 if __name__ == "__main__":
-    update_index_page()  # Only update the existing index.html with new run
+    parser = argparse.ArgumentParser(description='Update index page with new benchmark results')
+    parser.add_argument('--input-file', default='benchmark_results.json', help='Input JSON file')
+    parser.add_argument('--index-file', default='index.html', help='Index HTML file to update')
+    args = parser.parse_args()
+    
+    update_index_page(args.input_file, args.index_file)

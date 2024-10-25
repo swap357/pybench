@@ -5,6 +5,7 @@ from io import BytesIO
 from datetime import datetime
 import os
 import shutil
+import argparse
 
 def create_benchmark_page(json_file, output_dir, run_id):
     """Create a detailed benchmark page for a specific run"""
@@ -202,15 +203,19 @@ def create_benchmark_page(json_file, output_dir, run_id):
     with open(output_file, 'w') as f:
         f.write(html_content)
 
-def json_to_html(json_file):
+def json_to_html(json_file, output_dir='runs'):
     """Process benchmark results and create a single run page"""
-    runs_dir = 'runs'
-    os.makedirs(runs_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
-    shutil.copy2(json_file, os.path.join(runs_dir, f"{run_id}.json"))
-    create_benchmark_page(json_file, runs_dir, run_id)
+    shutil.copy2(json_file, os.path.join(output_dir, f"{run_id}.json"))
+    create_benchmark_page(json_file, output_dir, run_id)
     return run_id
 
 if __name__ == "__main__":
-    json_to_html('benchmark_results.json')  # Changed from benchmark_report.json
+    parser = argparse.ArgumentParser(description='Generate HTML report from benchmark results')
+    parser.add_argument('--input-file', default='benchmark_results.json', help='Input JSON file')
+    parser.add_argument('--output-dir', default='runs', help='Output directory for HTML report')
+    args = parser.parse_args()
+    
+    json_to_html(args.input_file, args.output_dir)
