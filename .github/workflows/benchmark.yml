@@ -1,18 +1,20 @@
 name: Benchmark
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       build_from_source:
         description: 'Build Python from source'
         required: false
         default: 'true'
+      profile_level:
+        description: 'Profiling level (basic/detailed/none)'
+        required: false
+        default: 'basic'
+      iterations:
+        description: 'Number of benchmark iterations'
+        required: false
+        default: '5'
 
 # Add permissions configuration
 permissions:
@@ -139,7 +141,7 @@ jobs:
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-        python benchmark_runner.py --profile basic --report-format both
+        python benchmark_runner.py --profile ${{{ github.event.inputs.profile_level }}} --report-format both
         ls -l  # Debug: list files to verify JSON was created
 
     - name: Install script dependencies
