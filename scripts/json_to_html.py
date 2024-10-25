@@ -218,7 +218,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
 
     html_content += "</table></body></html>"
 
-    # Update output path to use results.html
+    # Write directly to the specified output directory
     output_file = os.path.join(output_dir, "results.html")
     with open(output_file, 'w') as f:
         f.write(html_content)
@@ -228,13 +228,8 @@ def json_to_html(json_file, output_dir='runs', run_id=None):
     if run_id is None:
         run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    # Create run-specific directory
-    run_dir = os.path.join(output_dir, run_id)
-    os.makedirs(run_dir, exist_ok=True)
-    
-    # Create benchmark page in the run directory
-    create_benchmark_page(json_file, run_dir, run_id)
-    
+    # No directory creation here, just create the page
+    create_benchmark_page(json_file, output_dir, run_id)
     return run_id
 
 if __name__ == "__main__":

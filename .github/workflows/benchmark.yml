@@ -164,12 +164,12 @@ jobs:
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         echo "Using run ID: ${TIMESTAMP}"
         
-        # Save scripts and benchmark results
+        # Create directory structure
         mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
         cp -r scripts /tmp/benchmark_results/
         cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
         
-        # Generate HTML report with specific run ID
+        # Generate HTML report with specific run ID and output directory
         python /tmp/benchmark_results/scripts/json_to_html.py \
           --input-file benchmark_results.json \
           --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
@@ -200,7 +200,7 @@ jobs:
           cp /tmp/benchmark_results/scripts/index_template.html index.html
         fi
         
-        # Copy new benchmark results
+        # Copy new benchmark results (maintain single level directory)
         mkdir -p "runs/${TIMESTAMP}"
         cp -r "/tmp/benchmark_results/runs/${TIMESTAMP}"/* "runs/${TIMESTAMP}/"
         
