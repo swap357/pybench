@@ -121,16 +121,32 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git checkout gh-pages || git checkout -b gh-pages
         
-        # Create runs directory if it doesn't exist
+        # Save current files to temp location
+        mkdir -p /tmp/benchmark_results
+        cp -r runs/* /tmp/benchmark_results/ || true
+        cp index.html /tmp/benchmark_results/ || true
+        
+        # Switch to gh-pages branch
+        if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+          git fetch origin gh-pages
+          git checkout gh-pages
+        else
+          git checkout --orphan gh-pages
+          git rm -rf .
+        fi
+        
+        # Create runs directory and copy files
         mkdir -p runs
-        
-        # Copy new files
-        cp -r runs/* runs/ || true
-        cp index.html .
+        cp -r /tmp/benchmark_results/* . || true
         
         # Add and commit all changes
-        git add index.html runs/
-        git commit -m "Update benchmark results (Run ID: $(date +%Y%m%d_%H%M%S))"
-        git push origin gh-pages
+        git add -A
+        
+        # Only commit if there are changes
+        if git status --porcelain | grep .; then
+          git commit -m "Update benchmark results (Run ID: $(date +%Y%m%d_%H%M%S))"
+          git push origin gh-pages
+        else
+          echo "No changes to commit"
+        fi
