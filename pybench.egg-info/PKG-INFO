@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: pybench
+Version: 0.1.0
+Summary: Benchmark suite for Python 3.12, 3.13, and 3.13t
+Requires-Python: >=3.12
+License-File: LICENSE
+Requires-Dist: rich>=13.0.0
+Requires-Dist: psutil>=5.9.0
+Requires-Dist: pandas>=1.0.0
+Requires-Dist: plotly>=5.0.0
+Requires-Dist: kaleido>=0.2.1
