@@ -130,6 +130,12 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
+        # Save current files to temp location
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        mkdir -p /tmp/benchmark_results
+        cp benchmark_results.json "/tmp/benchmark_results/${TIMESTAMP}.json"
+        cp index.html "/tmp/benchmark_results/index.html"
+        
         # Fetch and checkout gh-pages branch
         git fetch origin gh-pages || true
         
@@ -143,22 +149,16 @@ jobs:
           mkdir -p runs
         fi
         
-        # Generate timestamp for new files
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        
         # Copy new benchmark results
         mkdir -p runs
-        cp benchmark_results.json "runs/${TIMESTAMP}.json"
-        cp runs/*.html runs/ 2>/dev/null || true  # Copy any new HTML files
+        cp "/tmp/benchmark_results/${TIMESTAMP}.json" "runs/"
+        cp "/tmp/benchmark_results/index.html" .
         
         # Clean up unnecessary files
         rm -rf __pycache__
         rm -rf *.pyc
         rm -rf python_benchmark_suite.egg-info
         rm -f benchmark_results.json
-        
-        # Update index.html
-        cp index.html .
         
         # Stage all changes
         git add -A
