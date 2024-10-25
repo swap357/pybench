@@ -148,15 +148,6 @@ jobs:
       run: |
         python -m pip install plotly kaleido beautifulsoup4
 
-    - name: Generate Benchmark Report
-      run: |
-        ls -l  # Debug: verify files before running script
-        mkdir -p /tmp/benchmark_results  # Create directory first
-        python scripts/json_to_html.py \
-          --input-file benchmark_results.json \
-          --output-dir /tmp/benchmark_results \
-          --run-id ${TIMESTAMP}
-
     - name: Publish Benchmark Results to GitHub Pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -168,7 +159,7 @@ jobs:
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         echo "Using run ID: ${TIMESTAMP}"
         
-        # Create directory structure
+        # Create directory structure and copy files
         mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
         cp -r scripts /tmp/benchmark_results/
         cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
