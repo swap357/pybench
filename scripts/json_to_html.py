@@ -7,6 +7,34 @@ import os
 import shutil
 import argparse
 
+def get_version_colors(versions_info):
+    """Generate colors for different versions"""
+    # Fixed color for baseline
+    colors = {'baseline': '#757575'}  # Grey for baseline
+    
+    # Color palettes for different types
+    type_colors = {
+        'release': ['#64b5f6', '#42a5f5', '#2196f3', '#1e88e5', '#1976d2'],  # Blues
+        'experimental': ['#ffb74d', '#ffa726', '#ff9800', '#fb8c00', '#f57c00', 
+                        '#ff7043', '#ff5722', '#f4511e', '#e64a19', '#d84315']  # Oranges
+    }
+    
+    # Track used colors per type
+    used_colors = {'release': 0, 'experimental': 0}
+    
+    # Assign colors to versions
+    for version, info in versions_info.get('metadata', {}).items():
+        version_type = info.get('type')
+        if version_type == 'baseline':
+            continue
+            
+        if version_type in type_colors:
+            color_idx = used_colors[version_type]
+            colors[version] = type_colors[version_type][color_idx % len(type_colors[version_type])]
+            used_colors[version_type] += 1
+    
+    return colors
+
 def create_benchmark_page(json_file, output_dir, run_id):
     """Create a detailed benchmark page for a specific run"""
     with open(json_file, 'r') as f:
@@ -118,24 +146,22 @@ def create_benchmark_page(json_file, output_dir, run_id):
                     relative_perf = float(metrics['relative_performance'].strip('%'))
                 version_data[version]['relative_perfs'].append(relative_perf)
 
-    # Create plots using versions from data
-    colors = {
-        'baseline': '#757575',
-        'release': '#64b5f6',
-        'experimental': '#ffb74d'
-    }
+    # Get versions info and generate colors
+    versions_info = data['results'].get('versions_info', {})
+    colors = get_version_colors(versions_info)
 
-    # Execution time comparison plot
+    # Create plots using versions from data
     fig1 = go.Figure()
     for version in sorted_versions:
-        version_type = versions_info.get('metadata', {}).get(version, {}).get('type', 'release')
         metrics = version_data[version]
+        # Use version-specific color
+        color = colors.get(version, '#757575')  # Default to grey if color not found
         fig1.add_trace(go.Bar(
             name=version,
             y=test_names,
             x=metrics['relative_perfs'],
             orientation='h',
-            marker_color=colors[version_type]
+            marker_color=color
         ))
 
     fig1.update_layout(
@@ -151,15 +177,16 @@ def create_benchmark_page(json_file, output_dir, run_id):
     # Median execution time plot
     fig2 = go.Figure()
     for version in sorted_versions:
-        version_type = versions_info.get('metadata', {}).get(version, {}).get('type', 'release')
         metrics = version_data[version]
+        # Use same version-specific color
+        color = colors.get(version, '#757575')
         fig2.add_trace(go.Bar(
             name=version,
             y=test_names,
             x=metrics['medians'],
             error_x=dict(type='data', array=metrics['stddevs']),
             orientation='h',
-            marker_color=colors[version_type]  # Use type-based colors consistently
+            marker_color=color
         ))
 
     fig2.update_layout(
