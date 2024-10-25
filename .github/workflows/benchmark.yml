@@ -34,8 +34,6 @@ jobs:
         path: |
           ~/.pyenv
         key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pyenv-
 
     - name: Install pyenv dependencies
       run: |
