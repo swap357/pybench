@@ -42,7 +42,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
     html_content = f"""
     <html>
     <head>
-        <title>Benchmark Results</title>
+        <title>Benchmark results: {run_id}</title>
         <style>
             body {{ font-family: Arial, sans-serif; margin: 20px; max-width: 1400px; margin: 0 auto; }}
             h1, h2 {{ color: #333; }}
@@ -57,9 +57,28 @@ def create_benchmark_page(json_file, output_dir, run_id):
             .flex-container {{ display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }}
             .flex-item {{ flex: 1; min-width: 600px; }}
             .timestamp {{ color: #666; font-size: 0.9em; margin-top: 10px; }}
+            .breadcrumb {{ 
+                padding: 10px 0;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }}
+            .breadcrumb a {{ 
+                color: #0366d6;
+                text-decoration: none;
+            }}
+            .breadcrumb a:hover {{ 
+                text-decoration: underline;
+            }}
+            .breadcrumb span {{ 
+                color: #666;
+                margin: 0 5px;
+            }}
         </style>
     </head>
     <body>
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to index</a>
+        </div>
         <h1>Benchmark Results</h1>
         <div class="timestamp">Run ID: {run_id}</div>
         <h2>System Information</h2>

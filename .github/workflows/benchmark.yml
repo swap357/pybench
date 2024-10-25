@@ -145,51 +145,53 @@ jobs:
         # Clean working directory
         git clean -fd
         
-        # Fetch and checkout gh-pages branch
-        git fetch origin gh-pages || true
+        # Fetch gh-pages branch
+        echo "Fetching gh-pages branch..."
+        git fetch origin gh-pages
         
-        if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-          echo "Checking out existing gh-pages branch"
-          git checkout gh-pages
+        # Check if branch exists and checkout
+        if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
+          echo "Checking out existing gh-pages branch..."
+          git checkout -b gh-pages origin/gh-pages
         else
-          echo "Creating new gh-pages branch"
+          echo "Creating new gh-pages branch..."
           git checkout --orphan gh-pages
           git rm -rf .
           mkdir -p runs
           
           # Create initial index.html with template
           cat > index.html << 'EOL'
-          <html>
-          <head>
-              <title>Python Benchmark History</title>
-              <style>
-                  body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 0 auto; }
-                  h1 { color: #333; text-align: center; margin: 40px 0; }
-                  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                  th { background-color: #f8f9fa; color: #333; font-weight: bold; }
-                  tr:nth-child(even) { background-color: #f8f9fa; }
-                  tr:hover { background-color: #f5f5f5; }
-                  a { color: #0366d6; text-decoration: none; }
-                  a:hover { text-decoration: underline; }
-                  .system-info { color: #666; }
-                  .timestamp { white-space: nowrap; }
-                  .git-info { font-size: 0.9em; color: #666; }
-              </style>
-          </head>
-          <body>
-              <h1>Python Benchmark History</h1>
-              <table>
-                  <tr>
-                      <th>Date</th>
-                      <th>System Information</th>
-                      <th>Git Info</th>
-                      <th>Results</th>
-                  </tr>
-              </table>
-          </body>
-          </html>
-          EOL
+            <html>
+            <head>
+                <title>Py benchmarks index</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 0 auto; }
+                    h1 { color: #333; text-align: center; margin: 40px 0; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                    th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+                    tr:nth-child(even) { background-color: #f8f9fa; }
+                    tr:hover { background-color: #f5f5f5; }
+                    a { color: #0366d6; text-decoration: none; }
+                    a:hover { text-decoration: underline; }
+                    .system-info { color: #666; }
+                    .timestamp { white-space: nowrap; }
+                    .git-info { font-size: 0.9em; color: #666; }
+                </style>
+            </head>
+            <body>
+                <h1>Py benchmarks index</h1>
+                <table>
+                    <tr>
+                        <th>Date</th>
+                        <th>System Information</th>
+                        <th>Git Info</th>
+                        <th>Results</th>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            EOL
         fi
         
         # Debug: Show current directory contents
