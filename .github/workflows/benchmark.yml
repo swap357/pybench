@@ -145,6 +145,9 @@ jobs:
         cp benchmark_results.json "/tmp/benchmark_results/${TIMESTAMP}.json"
         cp index.html "/tmp/benchmark_results/index.html"
         
+        # Clean working directory
+        git clean -fd
+        
         # Fetch and checkout gh-pages branch
         git fetch origin gh-pages || true
         
