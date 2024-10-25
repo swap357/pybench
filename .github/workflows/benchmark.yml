@@ -121,7 +121,7 @@ jobs:
 
     - name: Install script dependencies
       run: |
-        python -m pip install plotly kaleido
+        python -m pip install plotly kaleido beautifulsoup4
 
     - name: Generate Benchmark Report
       run: |
@@ -143,7 +143,6 @@ jobs:
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         mkdir -p /tmp/benchmark_results
         cp benchmark_results.json "/tmp/benchmark_results/${TIMESTAMP}.json"
-        cp index.html "/tmp/benchmark_results/index.html"
         
         # Clean working directory
         git clean -fd
@@ -159,12 +158,48 @@ jobs:
           git checkout --orphan gh-pages
           git rm -rf .
           mkdir -p runs
+          
+          # Create initial index.html with template
+          cat > index.html << 'EOL'
+          <html>
+          <head>
+              <title>Python Benchmark History</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 0 auto; }
+                  h1 { color: #333; text-align: center; margin: 40px 0; }
+                  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                  th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+                  tr:nth-child(even) { background-color: #f8f9fa; }
+                  tr:hover { background-color: #f5f5f5; }
+                  a { color: #0366d6; text-decoration: none; }
+                  a:hover { text-decoration: underline; }
+                  .system-info { color: #666; }
+                  .timestamp { white-space: nowrap; }
+                  .git-info { font-size: 0.9em; color: #666; }
+              </style>
+          </head>
+          <body>
+              <h1>Python Benchmark History</h1>
+              <table>
+                  <tr>
+                      <th>Date</th>
+                      <th>System Information</th>
+                      <th>Git Info</th>
+                      <th>Results</th>
+                  </tr>
+              </table>
+          </body>
+          </html>
+          EOL
         fi
         
         # Copy new benchmark results
         mkdir -p runs
         cp "/tmp/benchmark_results/${TIMESTAMP}.json" "runs/"
-        cp "/tmp/benchmark_results/index.html" .
+        
+        # Update index.html with new run
+        python scripts/update_index.py
         
         # Clean up unnecessary files
         rm -rf __pycache__

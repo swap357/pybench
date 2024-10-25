@@ -1,94 +1,95 @@
 import json
 import os
 from datetime import datetime
+from bs4 import BeautifulSoup
+import re
 
-def create_index_page(runs_dir='runs'):
-    """Create an index page with links to all benchmark runs"""
-    runs = []
-    for filename in os.listdir(runs_dir):
-        if filename.endswith('.json'):
-            with open(os.path.join(runs_dir, filename), 'r') as f:
-                data = json.load(f)
-                run_id = filename.replace('.json', '')
-                timestamp = datetime.fromtimestamp(os.path.getctime(
-                    os.path.join(runs_dir, filename)))
-                system_info = data['system_info']
-                # Extract git information if available
-                git_info = data.get('git_info', {})
-                runs.append({
-                    'id': run_id,
-                    'timestamp': timestamp,
-                    'system': system_info,
-                    'git': git_info
-                })
-
-    # Sort runs by timestamp, most recent first
-    runs.sort(key=lambda x: x['timestamp'], reverse=True)
-
-    html_content = """
-    <html>
-    <head>
-        <title>Python Benchmark History</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 0 auto; }
-            h1 { color: #333; text-align: center; margin: 40px 0; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            th { background-color: #f8f9fa; color: #333; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f8f9fa; }
-            tr:hover { background-color: #f5f5f5; }
-            a { color: #0366d6; text-decoration: none; }
-            a:hover { text-decoration: underline; }
-            .system-info { color: #666; }
-            .timestamp { white-space: nowrap; }
-            .git-info { font-size: 0.9em; color: #666; }
-        </style>
-    </head>
-    <body>
-        <h1>Python Benchmark History</h1>
-        <table>
-            <tr>
-                <th>Date</th>
-                <th>System Information</th>
-                <th>Git Info</th>
-                <th>Results</th>
-            </tr>
-    """
-
-    for run in runs:
-        system_summary = f"""
-            <div class="system-info">
-                <div>CPU: {run['system']['cpu_count']} cores @ {run['system']['cpu_freq']['current']:.2f} MHz</div>
-                <div>Memory: {run['system']['memory_total'] / (1024**3):.2f} GB</div>
-                <div>OS: {run['system']['os_info']}</div>
-            </div>
-        """
+def extract_existing_runs(html_file):
+    """Extract existing run information from current index.html"""
+    if not os.path.exists(html_file):
+        return []
+    
+    with open(html_file, 'r') as f:
+        soup = BeautifulSoup(f.read(), 'html.parser')
         
-        git_info = run.get('git', {})
-        git_summary = f"""
-            <div class="git-info">
-                <div>Branch: {git_info.get('branch', 'N/A')}</div>
-                <div>Commit: {git_info.get('commit', 'N/A')}</div>
-            </div>
-        """ if git_info else "N/A"
+    runs = []
+    for row in soup.find_all('tr')[1:]:  # Skip header row
+        cols = row.find_all('td')
+        if len(cols) >= 4:
+            run_id = re.search(r'runs/(\d+).html', cols[3].find('a')['href']).group(1)
+            runs.append({
+                'timestamp': cols[0].text.strip(),
+                'system_info': cols[1].text.strip(),
+                'git_info': cols[2].text.strip(),
+                'id': run_id
+            })
+    return runs
 
-        html_content += f"""
-            <tr>
-                <td class="timestamp">{run['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}</td>
-                <td>{system_summary}</td>
-                <td>{git_summary}</td>
-                <td><a href="runs/{run['id']}.html">View Results</a></td>
-            </tr>
-        """
+def update_index_page(json_file='benchmark_results.json', index_file='index.html'):
+    """Update index.html with new benchmark run"""
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+    
+    timestamp = datetime.now()
+    system_info = data['system_info']
+    git_info = data.get('git_info', {})
+    run_id = timestamp.strftime('%Y%m%d_%H%M%S')
 
-    html_content += """
-        </table>
-    </body>
-    </html>
-    """
+    # Read existing index.html
+    with open(index_file, 'r') as f:
+        soup = BeautifulSoup(f.read(), 'html.parser')
 
-    with open('index.html', 'w') as f:
-        f.write(html_content)
+    # Find the table
+    table = soup.find('table')
+    
+    # Create new row
+    new_row = soup.new_tag('tr')
+    
+    # Add timestamp
+    td_time = soup.new_tag('td')
+    td_time['class'] = 'timestamp'
+    td_time.string = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    new_row.append(td_time)
+    
+    # Add system info
+    td_sys = soup.new_tag('td')
+    sys_div = soup.new_tag('div')
+    sys_div['class'] = 'system-info'
+    sys_div.append(f"CPU: {system_info['cpu_count']} cores @ {system_info['cpu_freq']['current']:.2f} MHz\n")
+    sys_div.append(soup.new_tag('br'))
+    sys_div.append(f"Memory: {system_info['memory_total'] / (1024**3):.2f} GB\n")
+    sys_div.append(soup.new_tag('br'))
+    sys_div.append(f"OS: {system_info['os_info']}")
+    td_sys.append(sys_div)
+    new_row.append(td_sys)
+    
+    # Add git info
+    td_git = soup.new_tag('td')
+    if git_info:
+        git_div = soup.new_tag('div')
+        git_div['class'] = 'git-info'
+        git_div.append(f"Branch: {git_info.get('branch', 'N/A')}\n")
+        git_div.append(soup.new_tag('br'))
+        git_div.append(f"Commit: {git_info.get('commit', 'N/A')}")
+        td_git.append(git_div)
+    else:
+        td_git.string = 'N/A'
+    new_row.append(td_git)
+    
+    # Add results link
+    td_link = soup.new_tag('td')
+    a = soup.new_tag('a', href=f"runs/{run_id}.html")
+    a.string = 'View Results'
+    td_link.append(a)
+    new_row.append(td_link)
+    
+    # Insert new row after header
+    header_row = table.find('tr')
+    header_row.insert_after(new_row)
+    
+    # Write updated index.html
+    with open(index_file, 'w') as f:
+        f.write(str(soup))
 
 if __name__ == "__main__":
-    create_index_page()
+    update_index_page()  # Only update the existing index.html with new run
