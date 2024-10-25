@@ -35,7 +35,7 @@ class BenchmarkRunner:
     # Define interpreter versions here as a class variable
     PYTHON_VERSIONS = {
         "3.12.7": {"type": "baseline"},  # Marking baseline version
-        # "3.13.0": {"type": "release"},
+        "3.13.0": {"type": "release"},
         "3.13.0t": {"type": "experimental"}
     }
     BASELINE_VERSION = "3.12.7"
@@ -71,10 +71,9 @@ class BenchmarkRunner:
         """Discover all benchmark modules in the benchmarks/tests directory."""
         benchmark_files = []
         categories = [
-            'cpu/recursive' 
-            # 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
-            # 'object/dict', 'object/list', 'object/string', 'interpreter/gil',
-            # 'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
+            'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
+            'object/dict', 'object/list', 'object/string', 'interpreter/gil',
+            'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
         ]
 
         for category in categories:
