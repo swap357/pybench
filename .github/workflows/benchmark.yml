@@ -135,8 +135,12 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Save scripts we'll need
+        # Save scripts and benchmark results
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        mkdir -p /tmp/benchmark_results
         cp -r scripts /tmp/benchmark_results/
+        cp benchmark_results.json "/tmp/benchmark_results/${TIMESTAMP}.json"
+        cp -r runs/* /tmp/benchmark_results/ || true
         
         # Debug: Show what we saved
         echo "Contents of /tmp/benchmark_results:"
@@ -145,79 +149,43 @@ jobs:
         # Clean working directory
         git clean -fd
         
-        # Fetch gh-pages branch
+        # Fetch and checkout gh-pages branch
         echo "Fetching gh-pages branch..."
         git fetch origin gh-pages
         
-        # Check if branch exists and checkout
-        if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
+        # Check if branch exists on remote and checkout
+        if git ls-remote --heads origin gh-pages | grep gh-pages > /dev/null; then
           echo "Checking out existing gh-pages branch..."
-          git checkout -b gh-pages origin/gh-pages
+          git checkout gh-pages
+          git pull origin gh-pages
         else
           echo "Creating new gh-pages branch..."
           git checkout --orphan gh-pages
           git rm -rf .
           mkdir -p runs
           
-          # Create initial index.html with template
-          cat > index.html << 'EOL'
-            <html>
-            <head>
-                <title>Py benchmarks index</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 0 auto; }
-                    h1 { color: #333; text-align: center; margin: 40px 0; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                    th { background-color: #f8f9fa; color: #333; font-weight: bold; }
-                    tr:nth-child(even) { background-color: #f8f9fa; }
-                    tr:hover { background-color: #f5f5f5; }
-                    a { color: #0366d6; text-decoration: none; }
-                    a:hover { text-decoration: underline; }
-                    .system-info { color: #666; }
-                    .timestamp { white-space: nowrap; }
-                    .git-info { font-size: 0.9em; color: #666; }
-                </style>
-            </head>
-            <body>
-                <h1>Py benchmarks index</h1>
-                <table>
-                    <tr>
-                        <th>Date</th>
-                        <th>System Information</th>
-                        <th>Git Info</th>
-                        <th>Results</th>
-                    </tr>
-                </table>
-            </body>
-            </html>
-            EOL
+          # Create initial index.html from saved template
+          cp /tmp/benchmark_results/scripts/index_template.html index.html
         fi
         
-        # Debug: Show current directory contents
-        echo "Contents after checkout:"
-        ls -la
-        
-        # Copy back the scripts and new results
-        mkdir -p runs scripts
-        cp -r /tmp/benchmark_results/scripts/* scripts/
-        cp -r /tmp/benchmark_results/*.{json,html} runs/ || true
+        # Copy new benchmark results
+        mkdir -p runs
+        cp "/tmp/benchmark_results/${TIMESTAMP}.json" "runs/"
+        cp -r /tmp/benchmark_results/*.html runs/ || true
         
         # Debug: Show contents before running update script
         echo "Contents before running update script:"
         ls -la
-        ls -la scripts/
         ls -la runs/
         
         # Update index.html with new run
-        python scripts/update_index.py --input-file "runs/$(ls -t runs/*.json | head -1)" --index-file index.html
+        python /tmp/benchmark_results/scripts/update_index.py --input-file "runs/${TIMESTAMP}.json" --index-file index.html
         
         # Clean up unnecessary files
         rm -rf __pycache__
         rm -rf *.pyc
         rm -rf python_benchmark_suite.egg-info
         rm -f benchmark_results.json
-        rm -rf scripts  # Remove scripts after we're done
         
         # Stage all changes
         git add -A
