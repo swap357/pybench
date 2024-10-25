@@ -1,0 +1,81 @@
+{
+  "results": {
+    "cpu/recursive/test_fibonacci": {
+      "3.12.7": {
+        "status": "baseline",
+        "duration": 1.191648292541504,
+        "error": null,
+        "relative_performance": null,
+        "statistical_data": {
+          "mean": 1.191648292541504,
+          "median": 1.1926002502441406,
+          "stddev": 0.008102095434673613,
+          "min": 1.1824181079864502,
+          "max": 1.2017662525177002,
+          "iterations": [
+            1.1967453956604004,
+            1.2017662525177002,
+            1.1926002502441406,
+            1.1824181079864502,
+            1.1847114562988281
+          ]
+        }
+      },
+      "3.13.0t": {
+        "status": "degraded",
+        "duration": 2.6479929447174073,
+        "error": null,
+        "relative_performance": "222.21%",
+        "statistical_data": {
+          "mean": 2.6479929447174073,
+          "median": 2.638411045074463,
+          "stddev": 0.02741530023893292,
+          "min": 2.6149415969848633,
+          "max": 2.6851799488067627,
+          "iterations": [
+            2.6149415969848633,
+            2.638411045074463,
+            2.6361474990844727,
+            2.6851799488067627,
+            2.6652846336364746
+          ]
+        }
+      }
+    },
+    "versions_info": {
+      "versions": [
+        "3.12.7",
+        "3.13.0t"
+      ],
+      "baseline": "3.12.7",
+      "metadata": {
+        "3.12.7": {
+          "type": "baseline"
+        },
+        "3.13.0t": {
+          "type": "experimental"
+        }
+      }
+    }
+  },
+  "system_info": {
+    "cpu_count": 4,
+    "memory_total": 16757342208,
+    "os_info": "Linux 6.5.0-1025-azure",
+    "cpu_freq": {
+      "current": 2909.83325,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "load_avg": [
+      3.0576171875,
+      1.7490234375,
+      0.74462890625
+    ]
+  },
+  "run_config": {
+    "iterations": 5,
+    "profile_level": "basic",
+    "benchmarks": null
+  }
+}
