@@ -17,7 +17,7 @@ def extract_existing_runs(html_file):
     for row in soup.find_all('tr')[1:]:  # Skip header row
         cols = row.find_all('td')
         if len(cols) >= 4:
-            run_id = re.search(r'runs/(\d+).html', cols[3].find('a')['href']).group(1)
+            run_id = re.search(r'runs/(\d+)/results.html', cols[3].find('a')['href']).group(1)
             runs.append({
                 'timestamp': cols[0].text.strip(),
                 'system_info': cols[1].text.strip(),
@@ -26,7 +26,7 @@ def extract_existing_runs(html_file):
             })
     return runs
 
-def update_index_page(json_file='benchmark_results.json', index_file='index.html'):
+def update_index_page(json_file='benchmark_results.json', index_file='index.html', run_id=None):
     """Update index.html with new benchmark run"""
     with open(json_file, 'r') as f:
         data = json.load(f)
@@ -34,7 +34,11 @@ def update_index_page(json_file='benchmark_results.json', index_file='index.html
     timestamp = datetime.now()
     system_info = data['system_info']
     git_info = data.get('git_info', {})
-    run_id = timestamp.strftime('%Y%m%d_%H%M%S')
+    if run_id:
+        timestamp = datetime.strptime(run_id, '%Y%m%d_%H%M%S')
+        run_id = run_id
+    else:
+        run_id = timestamp.strftime('%Y%m%d_%H%M%S')
 
     # Read existing index.html
     with open(index_file, 'r') as f:
@@ -79,7 +83,7 @@ def update_index_page(json_file='benchmark_results.json', index_file='index.html
     
     # Add results link
     td_link = soup.new_tag('td')
-    a = soup.new_tag('a', href=f"runs/{run_id}.html")
+    a = soup.new_tag('a', href=f"runs/{run_id}/results.html")
     a.string = 'View Results'
     td_link.append(a)
     new_row.append(td_link)
@@ -96,6 +100,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Update index page with new benchmark results')
     parser.add_argument('--input-file', default='benchmark_results.json', help='Input JSON file')
     parser.add_argument('--index-file', default='index.html', help='Index HTML file to update')
+    parser.add_argument('--run-id', help='Run ID (timestamp) for this benchmark run')
     args = parser.parse_args()
     
-    update_index_page(args.input_file, args.index_file)
+    update_index_page(args.input_file, args.index_file, args.run_id)

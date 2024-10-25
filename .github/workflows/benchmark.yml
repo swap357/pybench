@@ -47,11 +47,10 @@ jobs:
 
     - name: Install and configure pyenv
       run: |
-        # Remove existing pyenv if any
-        rm -rf ~/.pyenv
-        
-        # Fresh install of pyenv
-        curl https://pyenv.run | bash
+        # Only install pyenv if it doesn't exist
+        if [ ! -d "$HOME/.pyenv" ]; then
+          curl https://pyenv.run | bash
+        fi
         
         # Configure pyenv
         echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
@@ -62,6 +61,9 @@ jobs:
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
+        
+        # Rehash to ensure shims are up to date
+        pyenv rehash
         pyenv --version
 
     # First install a default Python version for running setup
@@ -92,20 +94,27 @@ jobs:
         # Get Python versions from the runner
         VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
         
+        # Rehash before checking versions
+        pyenv rehash
+        
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
           for version in $VERSIONS; do
             pyenv install -s $version --force
           done
         else
           for version in $VERSIONS; do
-            if ! pyenv versions | grep -q $version; then
+            if ! pyenv versions | grep -q "^[[:space:]]*$version\$"; then
+              echo "Installing Python $version..."
               pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
             else
-              echo "Python $version is already installed"
+              echo "Python $version is already installed and available"
             fi
           done
         fi
 
+        # Rehash after installations
+        pyenv rehash
+        
         # Set global Python to baseline version
         BASELINE=$(python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
         pyenv global $BASELINE
@@ -135,19 +144,26 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Save scripts and benchmark results
+        # Generate timestamp for this run
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        mkdir -p /tmp/benchmark_results
+        echo "Using run ID: ${TIMESTAMP}"
+        
+        # Save scripts and benchmark results
+        mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
         cp -r scripts /tmp/benchmark_results/
-        cp benchmark_results.json "/tmp/benchmark_results/${TIMESTAMP}.json"
-        cp -r runs/* /tmp/benchmark_results/ || true
+        cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
+        
+        # Generate HTML report with specific run ID
+        python /tmp/benchmark_results/scripts/json_to_html.py \
+          --input-file benchmark_results.json \
+          --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
+          --run-id ${TIMESTAMP}
         
         # Debug: Show what we saved
         echo "Contents of /tmp/benchmark_results:"
         ls -la /tmp/benchmark_results/
-        
-        # Clean working directory
-        git clean -fd
+        echo "Contents of run directory:"
+        ls -la "/tmp/benchmark_results/runs/${TIMESTAMP}"
         
         # Fetch and checkout gh-pages branch
         echo "Fetching gh-pages branch..."
@@ -169,17 +185,19 @@ jobs:
         fi
         
         # Copy new benchmark results
-        mkdir -p runs
-        cp "/tmp/benchmark_results/${TIMESTAMP}.json" "runs/"
-        cp -r /tmp/benchmark_results/*.html runs/ || true
+        mkdir -p "runs/${TIMESTAMP}"
+        cp -r "/tmp/benchmark_results/runs/${TIMESTAMP}"/* "runs/${TIMESTAMP}/"
         
         # Debug: Show contents before running update script
         echo "Contents before running update script:"
         ls -la
-        ls -la runs/
+        ls -la "runs/${TIMESTAMP}"
         
         # Update index.html with new run
-        python /tmp/benchmark_results/scripts/update_index.py --input-file "runs/${TIMESTAMP}.json" --index-file index.html
+        python /tmp/benchmark_results/scripts/update_index.py \
+          --input-file "runs/${TIMESTAMP}/results.json" \
+          --index-file index.html \
+          --run-id ${TIMESTAMP}
         
         # Clean up unnecessary files
         rm -rf __pycache__

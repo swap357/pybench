@@ -77,7 +77,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
     </head>
     <body>
         <div class="breadcrumb">
-            <a href="../index.html">← Back to index</a>
+            <a href="../../index.html">← Back to index</a>
         </div>
         <h1>Benchmark Results</h1>
         <div class="timestamp">Run ID: {run_id}</div>
@@ -218,23 +218,30 @@ def create_benchmark_page(json_file, output_dir, run_id):
 
     html_content += "</table></body></html>"
 
-    output_file = os.path.join(output_dir, f"{run_id}.html")
+    # Update output path to use results.html
+    output_file = os.path.join(output_dir, "results.html")
     with open(output_file, 'w') as f:
         f.write(html_content)
 
-def json_to_html(json_file, output_dir='runs'):
+def json_to_html(json_file, output_dir='runs', run_id=None):
     """Process benchmark results and create a single run page"""
-    os.makedirs(output_dir, exist_ok=True)
-
-    run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
-    shutil.copy2(json_file, os.path.join(output_dir, f"{run_id}.json"))
-    create_benchmark_page(json_file, output_dir, run_id)
+    if run_id is None:
+        run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Create run-specific directory
+    run_dir = os.path.join(output_dir, run_id)
+    os.makedirs(run_dir, exist_ok=True)
+    
+    # Create benchmark page in the run directory
+    create_benchmark_page(json_file, run_dir, run_id)
+    
     return run_id
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate HTML report from benchmark results')
     parser.add_argument('--input-file', default='benchmark_results.json', help='Input JSON file')
     parser.add_argument('--output-dir', default='runs', help='Output directory for HTML report')
+    parser.add_argument('--run-id', help='Run ID (timestamp) for this benchmark run')
     args = parser.parse_args()
     
-    json_to_html(args.input_file, args.output_dir)
+    json_to_html(args.input_file, args.output_dir, args.run_id)
