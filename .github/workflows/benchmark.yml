@@ -27,16 +27,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Cache Python versions
+    - name: Cache pyenv and Python versions
       uses: actions/cache@v4
-      id: cache-python
+      id: cache-pyenv
       with:
         path: |
-          ~/.pyenv/versions
-          ~/.pyenv/shims
-        key: ${{ runner.os }}-pyenv-versions-${{ hashFiles('pyproject.toml') }}
+          ~/.pyenv
+        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
-          ${{ runner.os }}-pyenv-versions-
+          ${{ runner.os }}-pyenv-
 
     - name: Install pyenv dependencies
       run: |
@@ -47,23 +46,26 @@ jobs:
 
     - name: Install and configure pyenv
       run: |
-        # Only install pyenv if it doesn't exist
+        # Install pyenv if not cached
         if [ ! -d "$HOME/.pyenv" ]; then
+          echo "Installing pyenv..."
           curl https://pyenv.run | bash
+        else
+          echo "Using cached pyenv installation"
         fi
         
         # Configure pyenv
         echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-        echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+        echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
         echo 'eval "$(pyenv init -)"' >> ~/.bashrc
         source ~/.bashrc
 
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
         eval "$(pyenv init -)"
         
-        # Rehash to ensure shims are up to date
-        pyenv rehash
+        # Verify installation
+        which pyenv
         pyenv --version
 
     # First install a default Python version for running setup
