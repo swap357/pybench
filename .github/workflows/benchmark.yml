@@ -29,11 +29,14 @@ jobs:
 
     - name: Cache Python versions
       uses: actions/cache@v4
+      id: cache-python
       with:
-        path: ~/.pyenv/versions
-        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
+        path: |
+          ~/.pyenv/versions
+          ~/.pyenv/shims
+        key: ${{ runner.os }}-pyenv-versions-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
-          ${{ runner.os }}-pyenv-
+          ${{ runner.os }}-pyenv-versions-
 
     - name: Install pyenv dependencies
       run: |
@@ -44,14 +47,13 @@ jobs:
 
     - name: Install and configure pyenv
       run: |
-        # Check if pyenv is already installed
-        if [ ! -d "$HOME/.pyenv" ]; then
-          curl https://pyenv.run | bash
-        else
-          echo "pyenv already installed, skipping installation"
-        fi
-
-        # Configure pyenv regardless of installation
+        # Remove existing pyenv if any
+        rm -rf ~/.pyenv
+        
+        # Fresh install of pyenv
+        curl https://pyenv.run | bash
+        
+        # Configure pyenv
         echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
         echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
         echo 'eval "$(pyenv init -)"' >> ~/.bashrc

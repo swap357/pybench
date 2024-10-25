@@ -1,5 +1,5 @@
 [project]
-name = "python-benchmark-suite"
+name = "pybench"
 version = "0.1.0"
 description = "Benchmark suite for Python 3.12, 3.13, and 3.13t"
 requires-python = ">=3.12"
