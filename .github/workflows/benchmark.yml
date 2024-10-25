@@ -130,30 +130,42 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Save current files to temp location
-        mkdir -p /tmp/benchmark_results
-        cp -r runs/* /tmp/benchmark_results/ || true
-        cp index.html /tmp/benchmark_results/ || true
+        # Fetch and checkout gh-pages branch
+        git fetch origin gh-pages || true
         
-        # Switch to gh-pages branch
         if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-          git fetch origin gh-pages
+          # Branch exists - check it out
           git checkout gh-pages
         else
+          # Create new branch
           git checkout --orphan gh-pages
           git rm -rf .
+          mkdir -p runs
         fi
         
-        # Create runs directory and copy files
-        mkdir -p runs
-        cp -r /tmp/benchmark_results/* . || true
+        # Generate timestamp for new files
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         
-        # Add and commit all changes
+        # Copy new benchmark results
+        mkdir -p runs
+        cp benchmark_results.json "runs/${TIMESTAMP}.json"
+        cp runs/*.html runs/ 2>/dev/null || true  # Copy any new HTML files
+        
+        # Clean up unnecessary files
+        rm -rf __pycache__
+        rm -rf *.pyc
+        rm -rf python_benchmark_suite.egg-info
+        rm -f benchmark_results.json
+        
+        # Update index.html
+        cp index.html .
+        
+        # Stage all changes
         git add -A
         
-        # Only commit if there are changes
+        # Commit and push if there are changes
         if git status --porcelain | grep .; then
-          git commit -m "Update benchmark results (Run ID: $(date +%Y%m%d_%H%M%S))"
+          git commit -m "Add benchmark results for run ${TIMESTAMP}"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push origin gh-pages
         else
