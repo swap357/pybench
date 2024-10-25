@@ -71,11 +71,20 @@ jobs:
     # First install a default Python version for running setup
     - name: Install default Python
       run: |
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
         eval "$(pyenv init -)"
-        pyenv install 3.12.7
+        
+        # Check if version is already installed
+        if ! pyenv versions | grep -q "^[[:space:]]*3.12.7\$"; then
+          echo "Installing Python 3.12.7..."
+          pyenv install 3.12.7
+        else
+          echo "Python 3.12.7 is already installed"
+        fi
+        
         pyenv global 3.12.7
+        python --version
 
     # Install dependencies first
     - name: Install dependencies
@@ -89,8 +98,8 @@ jobs:
     # Now we can use the benchmark runner to get versions
     - name: Install Python versions
       run: |
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
         eval "$(pyenv init -)"
 
         # Get Python versions from the runner
@@ -101,7 +110,12 @@ jobs:
         
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
           for version in $VERSIONS; do
-            pyenv install -s $version --force
+            if ! pyenv versions | grep -q "^[[:space:]]*$version\$"; then
+              echo "Installing Python $version from source..."
+              pyenv install -s $version --force
+            else
+              echo "Python $version already installed (from cache)"
+            fi
           done
         else
           for version in $VERSIONS; do
@@ -109,7 +123,7 @@ jobs:
               echo "Installing Python $version..."
               pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
             else
-              echo "Python $version is already installed and available"
+              echo "Python $version already installed (from cache)"
             fi
           done
         fi
