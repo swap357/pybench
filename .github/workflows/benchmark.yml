@@ -110,7 +110,7 @@ jobs:
         
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
           for version in $VERSIONS; do
-            if ! pyenv versions | grep -q "^[[:space:]]*$version\$"; then
+            if ! pyenv versions | grep "$version" > /dev/null; then
               echo "Installing Python $version from source..."
               pyenv install -s $version --force
             else
@@ -119,7 +119,7 @@ jobs:
           done
         else
           for version in $VERSIONS; do
-            if ! pyenv versions | grep -q "^[[:space:]]*$version\$"; then
+            if ! pyenv versions | grep "$version" > /dev/null; then
               echo "Installing Python $version..."
               pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
             else
