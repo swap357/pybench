@@ -44,7 +44,14 @@ jobs:
 
     - name: Install and configure pyenv
       run: |
-        curl https://pyenv.run | bash
+        # Check if pyenv is already installed
+        if [ ! -d "$HOME/.pyenv" ]; then
+          curl https://pyenv.run | bash
+        else
+          echo "pyenv already installed, skipping installation"
+        fi
+
+        # Configure pyenv regardless of installation
         echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
         echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
         echo 'eval "$(pyenv init -)"' >> ~/.bashrc
