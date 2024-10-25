@@ -76,11 +76,11 @@ jobs:
         eval "$(pyenv init -)"
         
         # Check if version is already installed
-        if ! pyenv versions | grep -q "^[[:space:]]*3.12.7\$"; then
+        if ! pyenv versions | grep "3.12.7" > /dev/null; then
           echo "Installing Python 3.12.7..."
-          pyenv install 3.12.7
+          pyenv install -s 3.12.7
         else
-          echo "Python 3.12.7 is already installed"
+          echo "Python 3.12.7 already installed (from cache)"
         fi
         
         pyenv global 3.12.7
