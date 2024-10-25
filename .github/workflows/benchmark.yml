@@ -151,7 +151,11 @@ jobs:
     - name: Generate Benchmark Report
       run: |
         ls -l  # Debug: verify files before running script
-        python scripts/json_to_html.py --input-file benchmark_results.json --output-dir /tmp/benchmark_results
+        mkdir -p /tmp/benchmark_results  # Create directory first
+        python scripts/json_to_html.py \
+          --input-file benchmark_results.json \
+          --output-dir /tmp/benchmark_results \
+          --run-id ${TIMESTAMP}
 
     - name: Publish Benchmark Results to GitHub Pages
       env:
