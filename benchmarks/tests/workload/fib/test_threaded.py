@@ -23,7 +23,7 @@ def main():
     result_queue = Queue()
     
     # Create thread for each Fibonacci number
-    for n in range(32):
+    for n in range(47):
         thread = threading.Thread(
             target=worker,
             args=(n, result_queue)
