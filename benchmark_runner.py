@@ -37,8 +37,8 @@ class BenchmarkRunner:
         "3.12.7": {"type": "baseline"},  # Marking baseline version
         "3.13.0": {"type": "release"},
         "3.13.0t": {"type": "experimental"},
-        "3.14.0a1": {"type": "experimental"},
-        "3.14.0a1t": {"type": "experimental"},
+        # "3.14.0a1": {"type": "experimental"},
+        # "3.14.0a1t": {"type": "experimental"},
     }
     BASELINE_VERSION = "3.12.7"
 
@@ -79,7 +79,10 @@ class BenchmarkRunner:
             # 'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
             # 'object/dict', 'object/list', 'object/string', 'interpreter/gil',
             # 'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
-            'workload/'
+            'workload/fib',
+            'workload/hash',
+            'workload/image',
+            'workload/matrix'
         ]
 
         for category in categories:
