@@ -19,7 +19,7 @@ def main():
         # Submit all numbers and gather results
         futures = [
             executor.submit(fibonacci, n)
-            for n in range(32)
+            for n in range(47)
         ]
         
         # Wait for all results
