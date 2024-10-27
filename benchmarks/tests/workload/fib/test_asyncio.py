@@ -15,7 +15,7 @@ async def main_async():
     # Create tasks for all numbers
     tasks = [
         asyncio.create_task(fibonacci(n))
-        for n in range(32)
+        for n in range(47)
     ]
     
     # Wait for all tasks
