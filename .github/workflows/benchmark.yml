@@ -141,7 +141,7 @@ jobs:
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-        python benchmark_runner.py --profile ${{{ github.event.inputs.profile_level }}} --report-format both
+        python benchmark_runner.py --profile ${{ github.event.inputs.profile_level }} --report-format both
         ls -l  # Debug: list files to verify JSON was created
 
     - name: Install script dependencies
