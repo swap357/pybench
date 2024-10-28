@@ -1,0 +1,262 @@
+
+    <html>
+    <head>
+        <title>Benchmark results: 20241028_181545</title>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; max-width: 1400px; margin: 0 auto; }
+            h1, h2 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+            tr.header { background-color: #f8f9fa; font-weight: bold; }
+            tr.baseline { background-color: #f8f9fa; }
+            .system-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .system-info li { margin-bottom: 5px; }
+            .plot-container { margin: 30px 0; }
+            .timestamp { color: #666; font-size: 0.9em; margin-top: 10px; }
+            .breadcrumb { 
+                padding: 10px 0;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .breadcrumb a { 
+                color: #0366d6;
+                text-decoration: none;
+            }
+            .breadcrumb a:hover { 
+                text-decoration: underline;
+            }
+            .breadcrumb span { 
+                color: #666;
+                margin: 0 5px;
+            }
+            .info-section {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            .info-section h2 {
+                margin-top: 0;
+            }
+            .info-section li {
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="breadcrumb">
+            <a href="../../index.html">← Back to index</a>
+        </div>
+        <h1>Benchmark Results</h1>
+        
+        <div class="info-section">
+            <h2>Run Configuration</h2>
+            <ul>
+                <li><strong>Run ID:</strong> 20241028_181545</li>
+                <li><strong>Iterations:</strong> 5</li>
+                <li><strong>Profile Level:</strong> basic</li>
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h2>System Information</h2>
+            <ul>
+                <li><strong>CPU Count:</strong> 4</li>
+                <li><strong>Total Memory:</strong> 15.61 GB</li>
+                <li><strong>OS:</strong> Linux 6.5.0-1025-azure</li>
+                <li><strong>CPU Frequency:</strong> 2922.80 MHz</li>
+                <li><strong>Load Average:</strong> [1.05, 0.43, 0.16]</li>
+            </ul>
+        </div>
+
+        <div class="plot-container">
+            <div id="perf_comparison" style="width:100%;height:800px;"></div>
+        </div>
+        <div class="plot-container">
+            <div id="exec_time" style="width:100%;height:800px;"></div>
+        </div>
+    
+        <script>
+            const perfComparisonData = [{"type": "bar", "name": "3.13.0t", "x": [199.61, 191.13, 2.26, 124.86], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters"], "orientation": "h", "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [198.98, 190.73, 2.29, 125.28], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters"], "orientation": "h", "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [100, 100, 100, 100], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters"], "orientation": "h", "marker": {"color": "#757575"}}];
+            const perfComparisonLayout = {"title": "Execution Time Comparison Across Tests", "xaxis": {"title": "Execution Time Increase (%)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('perf_comparison', perfComparisonData, perfComparisonLayout);
+
+            const execTimeData = [{"type": "bar", "name": "3.13.0t", "x": [2.7012693881988525, 0.8427066802978516, 0.023784637451171875, 0.29122495651245117], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters"], "orientation": "h", "error_x": {"type": "data", "array": [0.022728001066438533, 0.00292608496368141, 0.00015023762834541965, 0.00296347785193093], "visible": true}, "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [2.6991124153137207, 0.8414242267608643, 0.023865938186645508, 0.2926607131958008], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters"], "orientation": "h", "error_x": {"type": "data", "array": [0.008310196742245668, 0.0024627119480892974, 0.00043457933796845415, 0.0022217888944131535], "visible": true}, "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [1.3664464950561523, 0.440812349319458, 1.0498766899108887, 0.23376131057739258], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters"], "orientation": "h", "error_x": {"type": "data", "array": [0.02774158040868957, 0.002057812353559367, 0.0033815159183493804, 0.0014107294213035035], "visible": true}, "marker": {"color": "#757575"}}];
+            const execTimeLayout = {"title": "Median Execution Time with Error Bars", "xaxis": {"title": "Median Execution Time (s)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('exec_time', execTimeData, execTimeLayout);
+        </script>
+    <h2>Statistics</h2><table>
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_cache_line_bouncing</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>1.3664</td>
+                    <td>0.0277</td>
+                    <td>1.3564</td>
+                    <td>1.3146</td>
+                    <td>1.3877</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>2.6991</td>
+                    <td>0.0083</td>
+                    <td>2.6989</td>
+                    <td>2.6870</td>
+                    <td>2.7103</td>
+                    <td>198.98%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>2.7013</td>
+                    <td>0.0227</td>
+                    <td>2.7075</td>
+                    <td>2.6867</td>
+                    <td>2.7455</td>
+                    <td>199.61%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_adjacent_counters</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.4408</td>
+                    <td>0.0021</td>
+                    <td>0.4411</td>
+                    <td>0.4386</td>
+                    <td>0.4433</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.8414</td>
+                    <td>0.0025</td>
+                    <td>0.8413</td>
+                    <td>0.8391</td>
+                    <td>0.8452</td>
+                    <td>190.73%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.8427</td>
+                    <td>0.0029</td>
+                    <td>0.8431</td>
+                    <td>0.8389</td>
+                    <td>0.8459</td>
+                    <td>191.13%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_memory_barrier</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>1.0499</td>
+                    <td>0.0034</td>
+                    <td>1.0496</td>
+                    <td>1.0448</td>
+                    <td>1.0543</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.0239</td>
+                    <td>0.0004</td>
+                    <td>0.0240</td>
+                    <td>0.0236</td>
+                    <td>0.0247</td>
+                    <td>2.29%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.0238</td>
+                    <td>0.0002</td>
+                    <td>0.0237</td>
+                    <td>0.0236</td>
+                    <td>0.0239</td>
+                    <td>2.26%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_padded_counters</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.2338</td>
+                    <td>0.0014</td>
+                    <td>0.2340</td>
+                    <td>0.2325</td>
+                    <td>0.2364</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.2927</td>
+                    <td>0.0022</td>
+                    <td>0.2932</td>
+                    <td>0.2910</td>
+                    <td>0.2969</td>
+                    <td>125.28%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2912</td>
+                    <td>0.0030</td>
+                    <td>0.2922</td>
+                    <td>0.2893</td>
+                    <td>0.2963</td>
+                    <td>124.86%</td>
+                </tr>
+                </table></body></html>
