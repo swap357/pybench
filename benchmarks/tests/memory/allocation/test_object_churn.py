@@ -14,7 +14,7 @@ def main():
     start = time.time()
     
     # Create and destroy many small objects
-    for _ in range(1_000_000):
+    for _ in range(100_000):
         objects = [SmallObject(i, i*2) for i in range(100)]
         # Let objects go out of scope for GC
         

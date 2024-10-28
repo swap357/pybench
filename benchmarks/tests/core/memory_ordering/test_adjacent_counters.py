@@ -9,13 +9,13 @@ import array
 
 def main():
     iterations = 1_000_000
-    counters = array.array('Q', [0] * 4)
+    counters = array.array('Q', [0] * 4)  # Adjacent counters in same cache line
     
     start = time.time()
     
     def worker(index):
         for _ in range(iterations):
-            counters[index] += 1
+            counters[index] += 1  # Will cause cache line bouncing
     
     threads = [
         threading.Thread(target=worker, args=(i,))

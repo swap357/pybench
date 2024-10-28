@@ -74,6 +74,8 @@ class BenchmarkRunner:
         benchmark_files = []
         categories = [
             'core/memory_ordering',
+            'core/synchronization',  # Add this category
+            'core/threading',
             # 'core/refcounting',
             # 'core/specialization'
             # 'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
