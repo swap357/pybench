@@ -8,7 +8,7 @@ import threading
 import array
 
 def main():
-    iterations = 10_000_000
+    iterations = 1_000_000
     counters = array.array('Q', [0] * 4)
     
     start = time.time()
