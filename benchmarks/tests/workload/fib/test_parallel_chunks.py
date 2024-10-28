@@ -33,7 +33,7 @@ def main():
     start = time.time()
     
     # Generate larger workload
-    numbers = list(range(47))  # Increased workload
+    numbers = list(range(42))  # Increased workload
     num_threads = 4
     chunk_size = len(numbers) // num_threads
     chunks = chunk_list(numbers, chunk_size)

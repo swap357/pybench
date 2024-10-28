@@ -17,7 +17,7 @@ def main():
     # Use process pool with CPU count workers
     with Pool() as pool:
         # Map fibonacci to all numbers
-        results = pool.map(fibonacci, range(47))
+        results = pool.map(fibonacci, range(42))
         
     duration = time.time() - start
     print(f"Duration: {duration:.4f}")

@@ -67,7 +67,7 @@ def main():
     start = time.time()
     
     # Create larger workload
-    numbers = list(range(47))  # Increased workload
+    numbers = list(range(42))  # Increased workload
     
     # Create and run pipeline
     pipeline = Pipeline(num_workers=4)

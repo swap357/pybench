@@ -16,8 +16,8 @@ def fibonacci(n: int) -> int:
 def main():
     start = time.time()
     
-    # Calculate first 47 Fibonacci numbers
-    for n in range(47):
+    # Calculate first 42 Fibonacci numbers
+    for n in range(42):
         _ = fibonacci(n)
         
     duration = time.time() - start

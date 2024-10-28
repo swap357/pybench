@@ -76,7 +76,7 @@ def main():
     start = time.time()
     
     # Create larger workload
-    numbers = list(range(47))  # Increased workload
+    numbers = list(range(42))  # Increased workload
     
     # Process in parallel
     parallel_map = ParallelMap(num_workers=4)
