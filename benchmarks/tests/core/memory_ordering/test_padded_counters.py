@@ -8,7 +8,7 @@ import threading
 import array
 
 def main():
-    iterations = 10_000_000
+    iterations = 1_000_000
     
     class PaddedCounter:
         def __init__(self):
