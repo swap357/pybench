@@ -74,15 +74,15 @@ class BenchmarkRunner:
         benchmark_files = []
         categories = [
             # 'core/memory_ordering',
-            # 'core/refcounting',
-            # 'core/specialization'
+            'core/refcounting',
+            'core/specialization'
             # 'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
             # 'object/dict', 'object/list', 'object/string', 'interpreter/gil',
             # 'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
-            'workload/fib',
-            'workload/hash',
-            'workload/image',
-            'workload/matrix'
+            # 'workload/fib',
+            # 'workload/hash',
+            # 'workload/image',
+            # 'workload/matrix'
         ]
 
         for category in categories:
