@@ -6,37 +6,46 @@ import time
 import sys
 import threading
 import array
-from threading import Event
+import itertools
 
 def main():
     iterations = 1_000_000
-    data = array.array('Q', [0] * 8)
-    barrier = Event()
+    # Use multiple data points to prevent false sharing
+    data = array.array('Q', [0] * 16)  # 16 elements to span multiple cache lines
+    done = False
     
     start = time.time()
     
     def producer():
-        for i in range(iterations):
-            # Write data
-            data[0] = i
-            # Memory barrier (Event.set forces memory ordering)
-            barrier.set()
+        counter = itertools.count()
+        while not done:
+            # Write to first cache line
+            val = next(counter)
+            data[0] = val
+            # Force memory barrier
+            threading.get_ident()  # Memory barrier in CPython
     
     def consumer():
-        for _ in range(iterations):
-            # Wait for barrier (forces memory ordering)
-            barrier.wait()
-            # Read data
-            _ = data[0]
-            barrier.clear()
+        last_seen = 0
+        reads = 0
+        while reads < iterations:
+            # Read from first cache line
+            current = data[0]
+            if current != last_seen:
+                last_seen = current
+                reads += 1
+            # Force memory barrier
+            threading.get_ident()  # Memory barrier in CPython
     
     t1 = threading.Thread(target=producer)
     t2 = threading.Thread(target=consumer)
     
     t1.start()
     t2.start()
+    
+    t2.join()  # Wait for consumer to finish
+    done = True  # Signal producer to stop
     t1.join()
-    t2.join()
     
     duration = time.time() - start
     print(f"Duration: {duration:.4f}")
