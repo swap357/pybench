@@ -1,0 +1,477 @@
+
+    <html>
+    <head>
+        <title>Benchmark results: 20241028_201728</title>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; max-width: 1400px; margin: 0 auto; }
+            h1, h2 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+            tr.header { background-color: #f8f9fa; font-weight: bold; }
+            tr.baseline { background-color: #f8f9fa; }
+            .system-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .system-info li { margin-bottom: 5px; }
+            .plot-container { margin: 30px 0; }
+            .timestamp { color: #666; font-size: 0.9em; margin-top: 10px; }
+            .breadcrumb { 
+                padding: 10px 0;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .breadcrumb a { 
+                color: #0366d6;
+                text-decoration: none;
+            }
+            .breadcrumb a:hover { 
+                text-decoration: underline;
+            }
+            .breadcrumb span { 
+                color: #666;
+                margin: 0 5px;
+            }
+            .info-section {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            .info-section h2 {
+                margin-top: 0;
+            }
+            .info-section li {
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="breadcrumb">
+            <a href="../../index.html">← Back to index</a>
+        </div>
+        <h1>Benchmark Results</h1>
+        
+        <div class="info-section">
+            <h2>Run Configuration</h2>
+            <ul>
+                <li><strong>Run ID:</strong> 20241028_201728</li>
+                <li><strong>Iterations:</strong> 5</li>
+                <li><strong>Profile Level:</strong> basic</li>
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h2>System Information</h2>
+            <ul>
+                <li><strong>CPU Count:</strong> 4</li>
+                <li><strong>Total Memory:</strong> 15.61 GB</li>
+                <li><strong>OS:</strong> Linux 6.5.0-1025-azure</li>
+                <li><strong>CPU Frequency:</strong> 2923.43 MHz</li>
+                <li><strong>Load Average:</strong> [0.79, 0.25, 0.09]</li>
+            </ul>
+        </div>
+
+        <div class="plot-container">
+            <div id="perf_comparison" style="width:100%;height:800px;"></div>
+        </div>
+        <div class="plot-container">
+            <div id="exec_time" style="width:100%;height:800px;"></div>
+        </div>
+    
+        <script>
+            const perfComparisonData = [{"type": "bar", "name": "3.13.0t", "x": [197.09, 183.76, 2.29, 125.17, 97.95, 117.0, 112.95, 114.41, 198.85], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters", "core/synchronization/test_lock_patterns", "core/threading/test_pool_map", "core/threading/test_executor_map", "core/threading/test_executor_submit", "core/threading/test_pool_apply"], "orientation": "h", "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [197.58, 184.22, 2.33, 124.69, 105.34, 118.03, 112.68, 112.54, 198.14], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters", "core/synchronization/test_lock_patterns", "core/threading/test_pool_map", "core/threading/test_executor_map", "core/threading/test_executor_submit", "core/threading/test_pool_apply"], "orientation": "h", "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [100, 100, 100, 100, 100, 100, 100, 100, 100], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters", "core/synchronization/test_lock_patterns", "core/threading/test_pool_map", "core/threading/test_executor_map", "core/threading/test_executor_submit", "core/threading/test_pool_apply"], "orientation": "h", "marker": {"color": "#757575"}}];
+            const perfComparisonLayout = {"title": "Execution Time Comparison Across Tests", "xaxis": {"title": "Execution Time Increase (%)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('perf_comparison', perfComparisonData, perfComparisonLayout);
+
+            const execTimeData = [{"type": "bar", "name": "3.13.0t", "x": [2.647395133972168, 0.807908296585083, 0.023816347122192383, 0.2917158603668213, 0.22614240646362305, 0.23815584182739258, 0.21558475494384766, 0.21821904182434082, 0.4587056636810303], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters", "core/synchronization/test_lock_patterns", "core/threading/test_pool_map", "core/threading/test_executor_map", "core/threading/test_executor_submit", "core/threading/test_pool_apply"], "orientation": "h", "error_x": {"type": "data", "array": [0.008275456329449206, 0.003192670732899051, 0.00046663432673599054, 0.002329751338045753, 0.030313610092755162, 0.0072564362645736345, 0.003692525108133395, 0.005370729864122892, 0.010954871912511958], "visible": true}, "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [2.6555867195129395, 0.8077363967895508, 0.024218320846557617, 0.29240989685058594, 0.27557945251464844, 0.2420949935913086, 0.21623945236206055, 0.21755266189575195, 0.4459989070892334], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters", "core/synchronization/test_lock_patterns", "core/threading/test_pool_map", "core/threading/test_executor_map", "core/threading/test_executor_submit", "core/threading/test_pool_apply"], "orientation": "h", "error_x": {"type": "data", "array": [0.008070620875568807, 0.007749135573187692, 0.0005901077777035917, 0.0016059378592348564, 0.02932950177763658, 0.007036472094301668, 0.0021392084749060885, 0.001914733377393563, 0.018001242333852665], "visible": true}, "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [1.3487968444824219, 0.4405686855316162, 1.0500516891479492, 0.2329235076904297, 0.25297021865844727, 0.2055974006652832, 0.19155621528625488, 0.19141101837158203, 0.2309420108795166], "y": ["core/memory_ordering/test_cache_line_bouncing", "core/memory_ordering/test_adjacent_counters", "core/memory_ordering/test_memory_barrier", "core/memory_ordering/test_padded_counters", "core/synchronization/test_lock_patterns", "core/threading/test_pool_map", "core/threading/test_executor_map", "core/threading/test_executor_submit", "core/threading/test_pool_apply"], "orientation": "h", "error_x": {"type": "data", "array": [0.015960461542955193, 0.003090811257235871, 0.002461519101510602, 0.0020376272221179713, 0.00980347911263014, 0.0016969902106376074, 0.002467215172209366, 0.002166708679118617, 0.004555954228957359], "visible": true}, "marker": {"color": "#757575"}}];
+            const execTimeLayout = {"title": "Median Execution Time with Error Bars", "xaxis": {"title": "Median Execution Time (s)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('exec_time', execTimeData, execTimeLayout);
+        </script>
+    <h2>Statistics</h2><table>
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_cache_line_bouncing</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>1.3488</td>
+                    <td>0.0160</td>
+                    <td>1.3436</td>
+                    <td>1.3236</td>
+                    <td>1.3588</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>2.6556</td>
+                    <td>0.0081</td>
+                    <td>2.6548</td>
+                    <td>2.6432</td>
+                    <td>2.6658</td>
+                    <td>197.58%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>2.6474</td>
+                    <td>0.0083</td>
+                    <td>2.6481</td>
+                    <td>2.6394</td>
+                    <td>2.6602</td>
+                    <td>197.09%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_adjacent_counters</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.4406</td>
+                    <td>0.0031</td>
+                    <td>0.4401</td>
+                    <td>0.4370</td>
+                    <td>0.4448</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.8077</td>
+                    <td>0.0077</td>
+                    <td>0.8108</td>
+                    <td>0.8063</td>
+                    <td>0.8246</td>
+                    <td>184.22%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.8079</td>
+                    <td>0.0032</td>
+                    <td>0.8088</td>
+                    <td>0.8055</td>
+                    <td>0.8136</td>
+                    <td>183.76%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_memory_barrier</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>1.0501</td>
+                    <td>0.0025</td>
+                    <td>1.0513</td>
+                    <td>1.0488</td>
+                    <td>1.0543</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.0242</td>
+                    <td>0.0006</td>
+                    <td>0.0244</td>
+                    <td>0.0238</td>
+                    <td>0.0254</td>
+                    <td>2.33%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.0238</td>
+                    <td>0.0005</td>
+                    <td>0.0241</td>
+                    <td>0.0237</td>
+                    <td>0.0247</td>
+                    <td>2.29%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/memory_ordering/test_padded_counters</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.2329</td>
+                    <td>0.0020</td>
+                    <td>0.2339</td>
+                    <td>0.2321</td>
+                    <td>0.2372</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.2924</td>
+                    <td>0.0016</td>
+                    <td>0.2917</td>
+                    <td>0.2899</td>
+                    <td>0.2935</td>
+                    <td>124.69%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2917</td>
+                    <td>0.0023</td>
+                    <td>0.2928</td>
+                    <td>0.2912</td>
+                    <td>0.2969</td>
+                    <td>125.17%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/synchronization/test_lock_patterns</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.2530</td>
+                    <td>0.0098</td>
+                    <td>0.2488</td>
+                    <td>0.2313</td>
+                    <td>0.2541</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.2756</td>
+                    <td>0.0293</td>
+                    <td>0.2621</td>
+                    <td>0.2099</td>
+                    <td>0.2781</td>
+                    <td>105.34%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2261</td>
+                    <td>0.0303</td>
+                    <td>0.2437</td>
+                    <td>0.2186</td>
+                    <td>0.2775</td>
+                    <td>97.95%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/threading/test_pool_map</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.2056</td>
+                    <td>0.0017</td>
+                    <td>0.2064</td>
+                    <td>0.2045</td>
+                    <td>0.2083</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.2421</td>
+                    <td>0.0070</td>
+                    <td>0.2436</td>
+                    <td>0.2371</td>
+                    <td>0.2542</td>
+                    <td>118.03%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2382</td>
+                    <td>0.0073</td>
+                    <td>0.2415</td>
+                    <td>0.2368</td>
+                    <td>0.2541</td>
+                    <td>117.00%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/threading/test_executor_map</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.1916</td>
+                    <td>0.0025</td>
+                    <td>0.1923</td>
+                    <td>0.1902</td>
+                    <td>0.1963</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.2162</td>
+                    <td>0.0021</td>
+                    <td>0.2167</td>
+                    <td>0.2150</td>
+                    <td>0.2203</td>
+                    <td>112.68%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2156</td>
+                    <td>0.0037</td>
+                    <td>0.2172</td>
+                    <td>0.2147</td>
+                    <td>0.2236</td>
+                    <td>112.95%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/threading/test_executor_submit</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.1914</td>
+                    <td>0.0022</td>
+                    <td>0.1926</td>
+                    <td>0.1907</td>
+                    <td>0.1961</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.2176</td>
+                    <td>0.0019</td>
+                    <td>0.2167</td>
+                    <td>0.2142</td>
+                    <td>0.2184</td>
+                    <td>112.54%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2182</td>
+                    <td>0.0054</td>
+                    <td>0.2203</td>
+                    <td>0.2162</td>
+                    <td>0.2296</td>
+                    <td>114.41%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">core/threading/test_pool_apply</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.2309</td>
+                    <td>0.0046</td>
+                    <td>0.2283</td>
+                    <td>0.2232</td>
+                    <td>0.2321</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.4460</td>
+                    <td>0.0180</td>
+                    <td>0.4523</td>
+                    <td>0.4394</td>
+                    <td>0.4836</td>
+                    <td>198.14%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.4587</td>
+                    <td>0.0110</td>
+                    <td>0.4539</td>
+                    <td>0.4412</td>
+                    <td>0.4669</td>
+                    <td>198.85%</td>
+                </tr>
+                </table></body></html>
