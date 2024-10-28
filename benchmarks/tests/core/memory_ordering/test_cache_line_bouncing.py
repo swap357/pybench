@@ -8,7 +8,7 @@ import threading
 import array
 
 def main():
-    iterations = 10_000_000
+    iterations = 1_000_000
     shared_data = array.array('Q', [0] * 8)  # 64 bytes (typical cache line)
     
     start = time.time()
