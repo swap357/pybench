@@ -1,0 +1,209 @@
+name: Benchmark-SelfHosted
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_from_source:
+        description: 'Build Python from source'
+        required: false
+        default: 'true'
+      profile_level:
+        description: 'Profiling level (basic/detailed/none)'
+        required: false
+        default: 'basic'
+      iterations:
+        description: 'Number of benchmark iterations'
+        required: false
+        default: '5'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  benchmark:
+    runs-on: [self-hosted, desktop, desk357]  # Specify your self-hosted runner labels
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache pyenv and Python versions
+      uses: actions/cache@v4
+      id: cache-pyenv
+      with:
+        path: |
+          ~/.pyenv
+        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
+
+    - name: Install pyenv dependencies
+      run: |
+        sudo taskset -c 20-27 apt-get update
+        sudo taskset -c 20-27 apt-get install -y \
+          libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
+          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+
+    - name: Install and configure pyenv
+      run: |
+        # Wrap commands with taskset
+        if [ ! -d "$HOME/.pyenv" ]; then
+          echo "Installing pyenv..."
+          taskset -c 20-27 bash -c 'curl https://pyenv.run | bash'
+        else
+          echo "Using cached pyenv installation"
+        fi
+        
+        # Configure pyenv
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+        echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+        echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+        source ~/.bashrc
+
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+        
+        # Verify installation
+        taskset -c 20-27 which pyenv
+        taskset -c 20-27 pyenv --version
+
+    - name: Install default Python
+      run: |
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+        
+        # Check if version is already installed
+        if ! taskset -c 20-27 pyenv versions | grep "3.12.7" > /dev/null; then
+          echo "Installing Python 3.12.7..."
+          taskset -c 20-27 pyenv install -s 3.12.7
+        else
+          echo "Python 3.12.7 already installed (from cache)"
+        fi
+        
+        taskset -c 20-27 pyenv global 3.12.7
+        taskset -c 20-27 python --version
+
+    - name: Install dependencies
+      run: |
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        taskset -c 20-27 python -m pip install --upgrade pip
+        taskset -c 20-27 pip install -e .
+
+    - name: Install Python versions
+      run: |
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+
+        # Get Python versions from the runner
+        VERSIONS=$(taskset -c 20-27 python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
+        
+        # Rehash before checking versions
+        taskset -c 20-27 pyenv rehash
+        
+        if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
+          for version in $VERSIONS; do
+            if ! taskset -c 20-27 pyenv versions | grep "$version" > /dev/null; then
+              echo "Installing Python $version from source..."
+              taskset -c 20-27 pyenv install -s $version --force
+            else
+              echo "Python $version already installed (from cache)"
+            fi
+          done
+        else
+          for version in $VERSIONS; do
+            if ! taskset -c 20-27 pyenv versions | grep "$version" > /dev/null; then
+              echo "Installing Python $version..."
+              taskset -c 20-27 pyenv install $version || taskset -c 20-27 pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
+            else
+              echo "Python $version already installed (from cache)"
+            fi
+          done
+        fi
+
+        # Rehash after installations
+        taskset -c 20-27 pyenv rehash
+        
+        # Set global Python to baseline version
+        BASELINE=$(taskset -c 20-27 python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
+        taskset -c 20-27 pyenv global $BASELINE
+        taskset -c 20-27 python --version
+
+    - name: Run benchmarks
+      run: |
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        taskset -c 20-27 python benchmark_runner.py --profile ${{ github.event.inputs.profile_level }} --report-format both
+        ls -l
+
+    - name: Install script dependencies
+      run: |
+        taskset -c 20-27 python -m pip install plotly kaleido beautifulsoup4
+
+    - name: Publish Benchmark Results to GitHub Pages
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        taskset -c 20-27 bash -c '
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Generate timestamp for this run
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          echo "Using run ID: ${TIMESTAMP}"
+          
+          # Create directory structure and copy files
+          mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
+          cp -r scripts /tmp/benchmark_results/
+          cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
+          
+          # Generate HTML report
+          python /tmp/benchmark_results/scripts/json_to_html.py \
+            --input-file benchmark_results.json \
+            --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
+            --run-id ${TIMESTAMP}
+          
+          # Fetch and checkout gh-pages branch
+          git fetch origin gh-pages
+          
+          if git ls-remote --heads origin gh-pages | grep gh-pages > /dev/null; then
+            git checkout gh-pages
+            git pull origin gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+            mkdir -p runs
+            cp /tmp/benchmark_results/scripts/index_template.html index.html
+          fi
+          
+          # Copy new benchmark results
+          mkdir -p "runs/${TIMESTAMP}"
+          cp -r "/tmp/benchmark_results/runs/${TIMESTAMP}"/* "runs/${TIMESTAMP}/"
+          
+          # Update index.html
+          python /tmp/benchmark_results/scripts/update_index.py \
+            --input-file "runs/${TIMESTAMP}/results.json" \
+            --index-file index.html \
+            --run-id ${TIMESTAMP}
+          
+          # Clean up
+          rm -rf __pycache__
+          rm -rf *.pyc
+          rm -rf python_benchmark_suite.egg-info
+          rm -f benchmark_results.json
+          
+          # Commit and push
+          git add -A
+          
+          if git status --porcelain | grep .; then
+            git commit -m "Add benchmark results for run ${TIMESTAMP}"
+            git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin gh-pages
+          else
+            echo "No changes to commit"
+          fi
+        '
