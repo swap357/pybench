@@ -24,6 +24,9 @@ permissions:
 jobs:
   benchmark:
     runs-on: [self-hosted, desk357]  # Specify your self-hosted runner labels
+    env:
+      PYENV_ROOT: ${{ github.workspace }}/.pyenv
+      PATH: ${{ github.workspace }}/.pyenv/bin:$PATH
 
     steps:
     - uses: actions/checkout@v4
@@ -142,12 +145,18 @@ jobs:
 
     - name: Install script dependencies
       run: |
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
         python -m pip install plotly kaleido beautifulsoup4
 
     - name: Publish Benchmark Results to GitHub Pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
         bash -c '
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
