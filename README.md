@@ -1,6 +1,27 @@
-# Python Interpreter Benchmark Suite
+# Python Interpreter Performance Benchmarks
 
-A benchmark suite for comparing different Python interpreters, specifically designed to test Python 3.12, 3.13, and 3.13t (no GIL).
+A comprehensive benchmark suite for measuring Python interpreter performance across versions, with a focus on threading, memory management, and core optimizations.
 
-## Project Structure
+## Purpose
+
+This repository provides:
+- Systematic performance measurements across Python versions
+- Focus on threading and parallel processing improvements
+- Memory management and cache optimization benchmarks
+- Real-world inspired workload comparisons
+
+## Key Features
+
+- Multiple benchmark categories:
+  - Core interpreter behavior
+  - Threading and synchronization
+  - Memory management
+  - Parallel processing workloads
+- Automated test running and reporting
+- Statistical analysis of results
+- HTML report generation with visualizations
+
+## Quick Start
+
+1. Clone the repository:
 
