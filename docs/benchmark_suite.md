@@ -1,9 +1,20 @@
 # Python Interpreter Benchmark Suite
 
 ## Overview
-This benchmark suite is designed to measure and compare performance characteristics across different Python versions, with a particular focus on Python 3.13's free-threading support (PEP 703) and its impact on performance.
+Benchmarks here are designed to measure and compare performance characteristics across different Python versions, with a particular focus on Python 3.13's free-threading support (PEP 703) and its impact on performance.
 
 For detailed context about free-threading and specific areas being tested, see [Free Threading Context](free_threading_context.md).
+
+[Core Concepts](core_concepts.md)
+This document explains -
+- Thread Affinity and Biased Reference Counting
+- Specialization
+- False Sharing
+
+These concepts are key areas of focus for performance improvements in Python 3.13t as they relate more to the interpreter's internal implementation of free-threading and impact overall performance. Some are more cascading in nature and impact multiple areas.
+
+Another important concept is memory barriers and how they impact performance-
+[Memory Barriers Explained](memory_barriers_explained.md)
 
 ## Key Performance Targets
 
@@ -57,7 +68,6 @@ Real-world inspired workloads demonstrating practical performance patterns:
 
 3. **Process-Based**
    - Multiprocessing alternatives
-   - IPC overhead comparison
    - True parallelism benefits
 
 ## Implementation Details
@@ -69,12 +79,11 @@ Each benchmark follows these principles:
 3. Reproducible results - controls for system variables
 4. Clear documentation - explains what is being tested and why
 
-### Key Features
-- Automated test discovery and execution
+### Features
+- test discovery and execution with gh actions
 - Statistical analysis of results
 - System information collection
-- HTML report generation with visualizations
-- Support for multiple Python versions
+- HTML report generation with visualizations over gh-pages dashboard
 
 ## Running Benchmarks
 
@@ -109,14 +118,6 @@ See [Free Threading Context](free_threading_context.md#known-limitations) for de
 - Frame object safety
 - Iterator limitations
 - Single-threaded performance overhead
-
-## Contributing
-Contributions are welcome! When adding new benchmarks:
-1. Follow the single-responsibility principle
-2. Add appropriate documentation
-3. Place in the correct category directory
-4. Include baseline and optimized versions if applicable
-5. Add test description to this documentation
 
 ## References
 - [PEP 703 – Making the Global Interpreter Lock Optional in CPython](https://peps.python.org/pep-0703/)

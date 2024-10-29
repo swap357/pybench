@@ -1,10 +1,12 @@
 # Python Free-Threading Benchmarks
 
-## Context and Purpose
+## Context
 
-This benchmark suite is specifically designed to measure and analyze performance characteristics related to Python's experimental free-threading support (PEP 703) in Python 3.13+.
+Free-threading support in Python 3.13 (PEP 703) is an experimental feature that allows the Global Interpreter Lock (GIL) to be released for certain operations, potentially improving performance for certain workloads.
+- [PEP 703 – Making the Global Interpreter Lock Optional in CPython](https://peps.python.org/pep-0703/)
+- [Python HOWTOs - Free Threading](https://docs.python.org/3/howto/free-threading-python.html)
 
-## Key Areas of Focus
+## Key Areas of Focus mentioned on PEP 703 and Python HOWTOs
 
 ### 1. Single-Threaded Performance Impact
 Current overhead: ~40% in Python 3.13 (pyperformance suite)
