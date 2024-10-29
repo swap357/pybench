@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   benchmark:
-    runs-on: [self-hosted, desktop, desk357]  # Specify your self-hosted runner labels
+    runs-on: [self-hosted, desk357]  # Specify your self-hosted runner labels
 
     steps:
     - uses: actions/checkout@v4
