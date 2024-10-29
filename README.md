@@ -4,7 +4,9 @@ A comprehensive benchmark suite measuring performance characteristics of Python'
 
 ## Overview
 
-This benchmark suite focuses on measuring and analyzing performance impacts of Python's free-threading implementation, particularly:
+This benchmark suite focuses on measuring and analyzing performance impacts of Python's free-threading implementation, 
+
+key points realting to performance discussed in [PEP 703](https://peps.python.org/pep-0703/) and [Python HOWTOs - Free Threading](https://docs.python.org/3/howto/free-threading-python.html) are:
 
 ### Single-Thread Performance
 - Current overhead: ~40% in Python 3.13
