@@ -1,6 +1,6 @@
 # Python Free-Threading Performance Benchmarks
 
-A comprehensive benchmark suite measuring performance characteristics of Python's experimental free-threading support (PEP 703) in Python 3.13+.
+benchmarks measuring performance characteristics of Python's experimental free-threading support (PEP 703) in Python 3.13+.
 
 ## Overview
 
