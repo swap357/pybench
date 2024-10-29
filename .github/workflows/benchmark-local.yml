@@ -137,6 +137,16 @@ jobs:
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
+        
+        # Set environment variables for Python multiprocessing
+        export PYTHONPATH=.
+        export OMP_NUM_THREADS=6  # Number of cores in our range (2-7)
+        export MKL_NUM_THREADS=6
+        export OPENBLAS_NUM_THREADS=6
+        export VECLIB_MAXIMUM_THREADS=6
+        export NUMEXPR_NUM_THREADS=6
+        
+        # Run with taskset
         taskset -c 2-7 python benchmark_runner.py --profile ${{ github.event.inputs.profile_level }} --report-format both
         ls -l
 

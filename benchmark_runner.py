@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import psutil
 import json
 import argparse
+import multiprocessing
 
 @dataclass
 class SystemMetrics:
@@ -53,6 +54,14 @@ class BenchmarkRunner:
         self.iterations = iterations
         self.profile = profile
         self.system_info = self._collect_system_info()
+
+        # Set number of threads based on available cores
+        try:
+            process = psutil.Process()
+            affinity = process.cpu_affinity()
+            self.num_threads = len(affinity)  # Use number of available cores in affinity mask
+        except (AttributeError, psutil.Error):
+            self.num_threads = multiprocessing.cpu_count()  # Fallback to all cores
 
     def _collect_system_info(self) -> SystemMetrics:
         """Collect system-wide metrics."""
