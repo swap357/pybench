@@ -95,15 +95,15 @@ class BenchmarkRunner:
             'core/memory_ordering',
             'core/synchronization',  # Add this category
             'core/threading',
-            # 'core/refcounting',
-            # 'core/specialization'
-            # 'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
-            # 'object/dict', 'object/list', 'object/string', 'interpreter/gil',
-            # 'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
+            'core/refcounting',
+            'core/specialization'
+            'cpu/recursive', 'cpu/arithmetic', 'memory/allocation', 'memory/gc',
+            'object/dict', 'object/list', 'object/string', 'interpreter/gil',
+            'interpreter/bytecode', 'interpreter/imports', 'mixed/mem_cpu', 'mixed/io_cpu'
             # 'workload/fib',
-            # 'workload/hash',
-            # 'workload/image',
-            # 'workload/matrix'
+            'workload/hash',
+            'workload/image',
+            'workload/matrix'
         ]
 
         for category in categories:
