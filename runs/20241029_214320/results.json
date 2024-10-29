@@ -1,0 +1,171 @@
+{
+  "results": {
+    "workload/parallel/test_multiprocessing_processing": {},
+    "workload/parallel/test_naive_processing": {
+      "3.12.7": {
+        "status": "baseline",
+        "duration": 0.09992785453796386,
+        "error": null,
+        "relative_performance": null,
+        "statistical_data": {
+          "mean": 0.09992785453796386,
+          "median": 0.09990763664245605,
+          "stddev": 0.00014189064651819693,
+          "min": 0.09980177879333496,
+          "max": 0.10016632080078125,
+          "iterations": [
+            0.10016632080078125,
+            0.09992122650146484,
+            0.09990763664245605,
+            0.09984230995178223,
+            0.09980177879333496
+          ]
+        }
+      },
+      "3.13.0": {
+        "status": "similar",
+        "duration": 0.0965921401977539,
+        "error": null,
+        "relative_performance": "96.66%",
+        "statistical_data": {
+          "mean": 0.0965921401977539,
+          "median": 0.09659767150878906,
+          "stddev": 0.00021657440321634787,
+          "min": 0.09631991386413574,
+          "max": 0.09690165519714355,
+          "iterations": [
+            0.09690165519714355,
+            0.09647917747497559,
+            0.09659767150878906,
+            0.09631991386413574,
+            0.09666228294372559
+          ]
+        }
+      },
+      "3.13.0t": {
+        "status": "degraded",
+        "duration": 0.20506591796875,
+        "error": null,
+        "relative_performance": "205.21%",
+        "statistical_data": {
+          "mean": 0.20506591796875,
+          "median": 0.20494937896728516,
+          "stddev": 0.0006544916434910515,
+          "min": 0.20416569709777832,
+          "max": 0.2059612274169922,
+          "iterations": [
+            0.20416569709777832,
+            0.2059612274169922,
+            0.20532727241516113,
+            0.20494937896728516,
+            0.2049260139465332
+          ]
+        }
+      }
+    },
+    "workload/parallel/test_cache_aligned_processing": {
+      "3.12.7": {
+        "status": "baseline",
+        "duration": 0.19297804832458496,
+        "error": null,
+        "relative_performance": null,
+        "statistical_data": {
+          "mean": 0.19297804832458496,
+          "median": 0.1928877830505371,
+          "stddev": 0.0009804454329322549,
+          "min": 0.19205188751220703,
+          "max": 0.19460201263427734,
+          "iterations": [
+            0.19460201263427734,
+            0.19295477867126465,
+            0.19239377975463867,
+            0.1928877830505371,
+            0.19205188751220703
+          ]
+        }
+      },
+      "3.13.0": {
+        "status": "degraded",
+        "duration": 0.2340071678161621,
+        "error": null,
+        "relative_performance": "121.26%",
+        "statistical_data": {
+          "mean": 0.2340071678161621,
+          "median": 0.23487353324890137,
+          "stddev": 0.0016840321150917088,
+          "min": 0.23192811012268066,
+          "max": 0.23582720756530762,
+          "iterations": [
+            0.23487353324890137,
+            0.23192811012268066,
+            0.23582720756530762,
+            0.23488116264343262,
+            0.23252582550048828
+          ]
+        }
+      },
+      "3.13.0t": {
+        "status": "degraded",
+        "duration": 0.2906352043151855,
+        "error": null,
+        "relative_performance": "150.61%",
+        "statistical_data": {
+          "mean": 0.2906352043151855,
+          "median": 0.29076480865478516,
+          "stddev": 0.0004152010303493251,
+          "min": 0.28991150856018066,
+          "max": 0.29097747802734375,
+          "iterations": [
+            0.29076480865478516,
+            0.29075169563293457,
+            0.28991150856018066,
+            0.2907705307006836,
+            0.29097747802734375
+          ]
+        }
+      }
+    },
+    "workload/parallel/test_process_executor_processing": {},
+    "workload/parallel/test_preallocated_processing": {},
+    "versions_info": {
+      "versions": [
+        "3.12.7",
+        "3.13.0",
+        "3.13.0t"
+      ],
+      "baseline": "3.12.7",
+      "metadata": {
+        "3.12.7": {
+          "type": "baseline"
+        },
+        "3.13.0": {
+          "type": "release"
+        },
+        "3.13.0t": {
+          "type": "experimental"
+        }
+      }
+    }
+  },
+  "system_info": {
+    "cpu_count": 20,
+    "memory_total": 67185524736,
+    "os_info": "Linux 6.8.0-47-generic",
+    "cpu_freq": {
+      "current": 1878.2802499999998,
+      "min": 800.0,
+      "max": 4650.0
+    },
+    "load_avg": [
+      0.12353515625,
+      0.06982421875,
+      0.455078125
+    ],
+    "cpu_affinity": "cores 2-7"
+  },
+  "run_config": {
+    "iterations": 5,
+    "profile_level": "basic",
+    "benchmarks": null
+  }
+}
