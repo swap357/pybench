@@ -29,7 +29,7 @@ key points realting to performance discussed in [PEP 703](https://peps.python.or
 ## Documentation
 
 ### Core Concepts
-- [Free Threading Context](docs/free_threading_context.md) - Overview of PEP 703 and its implications
+
 - [Memory Barriers](docs/memory_barriers_explained.md) - Understanding memory ordering and barriers
 - [Core Concepts](docs/core_concepts.md) - Thread affinity, reference counting, and specialization
 
