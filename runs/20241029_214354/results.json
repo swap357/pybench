@@ -1,0 +1,171 @@
+{
+  "results": {
+    "workload/parallel/test_preallocated_processing": {},
+    "workload/parallel/test_multiprocessing_processing": {},
+    "workload/parallel/test_naive_processing": {
+      "3.12.7": {
+        "status": "baseline",
+        "duration": 0.19813752174377441,
+        "error": null,
+        "relative_performance": null,
+        "statistical_data": {
+          "mean": 0.19813752174377441,
+          "median": 0.1945488452911377,
+          "stddev": 0.008086704068700594,
+          "min": 0.19371533393859863,
+          "max": 0.21254539489746094,
+          "iterations": [
+            0.21254539489746094,
+            0.19371533393859863,
+            0.1941983699798584,
+            0.1945488452911377,
+            0.1956796646118164
+          ]
+        }
+      },
+      "3.13.0": {
+        "status": "similar",
+        "duration": 0.18635549545288085,
+        "error": null,
+        "relative_performance": "94.05%",
+        "statistical_data": {
+          "mean": 0.18635549545288085,
+          "median": 0.1864762306213379,
+          "stddev": 0.0013079870822976607,
+          "min": 0.18474555015563965,
+          "max": 0.18822622299194336,
+          "iterations": [
+            0.1864762306213379,
+            0.18674111366271973,
+            0.18822622299194336,
+            0.18558835983276367,
+            0.18474555015563965
+          ]
+        }
+      },
+      "3.13.0t": {
+        "status": "similar",
+        "duration": 0.18504371643066406,
+        "error": null,
+        "relative_performance": "93.39%",
+        "statistical_data": {
+          "mean": 0.18504371643066406,
+          "median": 0.18496060371398926,
+          "stddev": 0.0003026242150221857,
+          "min": 0.18468618392944336,
+          "max": 0.1854569911956787,
+          "iterations": [
+            0.18488359451293945,
+            0.18523120880126953,
+            0.18496060371398926,
+            0.1854569911956787,
+            0.18468618392944336
+          ]
+        }
+      }
+    },
+    "workload/parallel/test_cache_aligned_processing": {
+      "3.12.7": {
+        "status": "baseline",
+        "duration": 0.3257147312164307,
+        "error": null,
+        "relative_performance": null,
+        "statistical_data": {
+          "mean": 0.3257147312164307,
+          "median": 0.32563042640686035,
+          "stddev": 0.0023520045792761214,
+          "min": 0.3229808807373047,
+          "max": 0.3285517692565918,
+          "iterations": [
+            0.3229808807373047,
+            0.32388901710510254,
+            0.32752156257629395,
+            0.3285517692565918,
+            0.32563042640686035
+          ]
+        }
+      },
+      "3.13.0": {
+        "status": "degraded",
+        "duration": 0.6029877662658691,
+        "error": null,
+        "relative_performance": "185.13%",
+        "statistical_data": {
+          "mean": 0.6029877662658691,
+          "median": 0.6036844253540039,
+          "stddev": 0.0030719070066506917,
+          "min": 0.5980265140533447,
+          "max": 0.6063597202301025,
+          "iterations": [
+            0.6036844253540039,
+            0.6027712821960449,
+            0.6063597202301025,
+            0.6040968894958496,
+            0.5980265140533447
+          ]
+        }
+      },
+      "3.13.0t": {
+        "status": "degraded",
+        "duration": 0.6086029529571533,
+        "error": null,
+        "relative_performance": "186.85%",
+        "statistical_data": {
+          "mean": 0.6086029529571533,
+          "median": 0.6067969799041748,
+          "stddev": 0.007151611649853719,
+          "min": 0.599437952041626,
+          "max": 0.6172752380371094,
+          "iterations": [
+            0.6141948699951172,
+            0.6172752380371094,
+            0.6067969799041748,
+            0.599437952041626,
+            0.6053097248077393
+          ]
+        }
+      }
+    },
+    "workload/parallel/test_process_executor_processing": {},
+    "versions_info": {
+      "versions": [
+        "3.12.7",
+        "3.13.0",
+        "3.13.0t"
+      ],
+      "baseline": "3.12.7",
+      "metadata": {
+        "3.12.7": {
+          "type": "baseline"
+        },
+        "3.13.0": {
+          "type": "release"
+        },
+        "3.13.0t": {
+          "type": "experimental"
+        }
+      }
+    }
+  },
+  "system_info": {
+    "cpu_count": 4,
+    "memory_total": 16757342208,
+    "os_info": "Linux 6.5.0-1025-azure",
+    "cpu_freq": {
+      "current": 2968.67675,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "load_avg": [
+      0.7568359375,
+      0.333984375,
+      0.1357421875
+    ],
+    "cpu_affinity": "cores 0-3"
+  },
+  "run_config": {
+    "iterations": 5,
+    "profile_level": "basic",
+    "benchmarks": null
+  }
+}
