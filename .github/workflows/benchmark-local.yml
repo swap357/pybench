@@ -38,8 +38,8 @@ jobs:
 
     - name: Install pyenv dependencies
       run: |
-        sudo taskset -c 20-27 apt-get update
-        sudo taskset -c 20-27 apt-get install -y \
+        sudo taskset -c 2-7 apt-get update
+        sudo taskset -c 2-7 apt-get install -y \
           libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
           libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 
@@ -48,7 +48,7 @@ jobs:
         # Wrap commands with taskset
         if [ ! -d "$HOME/.pyenv" ]; then
           echo "Installing pyenv..."
-          taskset -c 20-27 bash -c 'curl https://pyenv.run | bash'
+          taskset -c 2-7 bash -c 'curl https://pyenv.run | bash'
         else
           echo "Using cached pyenv installation"
         fi
@@ -64,8 +64,8 @@ jobs:
         eval "$(pyenv init -)"
         
         # Verify installation
-        taskset -c 20-27 which pyenv
-        taskset -c 20-27 pyenv --version
+        taskset -c 2-7 which pyenv
+        taskset -c 2-7 pyenv --version
 
     - name: Install default Python
       run: |
@@ -74,23 +74,23 @@ jobs:
         eval "$(pyenv init -)"
         
         # Check if version is already installed
-        if ! taskset -c 20-27 pyenv versions | grep "3.12.7" > /dev/null; then
+        if ! taskset -c 2-7 pyenv versions | grep "3.12.7" > /dev/null; then
           echo "Installing Python 3.12.7..."
-          taskset -c 20-27 pyenv install -s 3.12.7
+          taskset -c 2-7 pyenv install -s 3.12.7
         else
           echo "Python 3.12.7 already installed (from cache)"
         fi
         
-        taskset -c 20-27 pyenv global 3.12.7
-        taskset -c 20-27 python --version
+        taskset -c 2-7 pyenv global 3.12.7
+        taskset -c 2-7 python --version
 
     - name: Install dependencies
       run: |
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-        taskset -c 20-27 python -m pip install --upgrade pip
-        taskset -c 20-27 pip install -e .
+        taskset -c 2-7 python -m pip install --upgrade pip
+        taskset -c 2-7 pip install -e .
 
     - name: Install Python versions
       run: |
@@ -99,25 +99,25 @@ jobs:
         eval "$(pyenv init -)"
 
         # Get Python versions from the runner
-        VERSIONS=$(taskset -c 20-27 python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
+        VERSIONS=$(taskset -c 2-7 python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
         
         # Rehash before checking versions
-        taskset -c 20-27 pyenv rehash
+        taskset -c 2-7 pyenv rehash
         
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
           for version in $VERSIONS; do
-            if ! taskset -c 20-27 pyenv versions | grep "$version" > /dev/null; then
+            if ! taskset -c 2-7 pyenv versions | grep "$version" > /dev/null; then
               echo "Installing Python $version from source..."
-              taskset -c 20-27 pyenv install -s $version --force
+              taskset -c 2-7 pyenv install -s $version --force
             else
               echo "Python $version already installed (from cache)"
             fi
           done
         else
           for version in $VERSIONS; do
-            if ! taskset -c 20-27 pyenv versions | grep "$version" > /dev/null; then
+            if ! taskset -c 2-7 pyenv versions | grep "$version" > /dev/null; then
               echo "Installing Python $version..."
-              taskset -c 20-27 pyenv install $version || taskset -c 20-27 pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
+              taskset -c 2-7 pyenv install $version || taskset -c 2-7 pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
             else
               echo "Python $version already installed (from cache)"
             fi
@@ -125,30 +125,30 @@ jobs:
         fi
 
         # Rehash after installations
-        taskset -c 20-27 pyenv rehash
+        taskset -c 2-7 pyenv rehash
         
         # Set global Python to baseline version
-        BASELINE=$(taskset -c 20-27 python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
-        taskset -c 20-27 pyenv global $BASELINE
-        taskset -c 20-27 python --version
+        BASELINE=$(taskset -c 2-7 python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
+        taskset -c 2-7 pyenv global $BASELINE
+        taskset -c 2-7 python --version
 
     - name: Run benchmarks
       run: |
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-        taskset -c 20-27 python benchmark_runner.py --profile ${{ github.event.inputs.profile_level }} --report-format both
+        taskset -c 2-7 python benchmark_runner.py --profile ${{ github.event.inputs.profile_level }} --report-format both
         ls -l
 
     - name: Install script dependencies
       run: |
-        taskset -c 20-27 python -m pip install plotly kaleido beautifulsoup4
+        taskset -c 2-7 python -m pip install plotly kaleido beautifulsoup4
 
     - name: Publish Benchmark Results to GitHub Pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        taskset -c 20-27 bash -c '
+        taskset -c 2-7 bash -c '
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
