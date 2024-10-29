@@ -174,6 +174,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
             <h2>System Information</h2>
             <ul>
                 <li><strong>CPU Count:</strong> {cpu_count}</li>
+                <li><strong>CPU Affinity:</strong> {system_info.get('cpu_affinity', 'Not restricted')}</li>
                 <li><strong>Total Memory:</strong> {memory_total / (1024**3):.2f} GB</li>
                 <li><strong>OS:</strong> {os_info}</li>
                 <li><strong>CPU Frequency:</strong> {cpu_freq['current']:.2f} MHz</li>

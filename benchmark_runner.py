@@ -21,6 +21,7 @@ class SystemMetrics:
     os_info: str
     cpu_freq: Dict
     load_avg: tuple
+    cpu_affinity: Optional[str] = None
 
 @dataclass
 class StatisticalResult:
@@ -61,12 +62,21 @@ class BenchmarkRunner:
         except FileNotFoundError:
             cpu_freq_dict = {"current": "N/A", "min": "N/A", "max": "N/A"}
 
+        # Get CPU affinity if available
+        try:
+            process = psutil.Process()
+            affinity = process.cpu_affinity()
+            cpu_affinity = f"cores {min(affinity)}-{max(affinity)}" if affinity else None
+        except (AttributeError, psutil.Error):
+            cpu_affinity = None
+
         return SystemMetrics(
             cpu_count=psutil.cpu_count(logical=True),
             memory_total=psutil.virtual_memory().total,
             os_info=f"{os.uname().sysname} {os.uname().release}",
             cpu_freq=cpu_freq_dict,
-            load_avg=os.getloadavg() if hasattr(os, 'getloadavg') else (0.0, 0.0, 0.0)
+            load_avg=os.getloadavg() if hasattr(os, 'getloadavg') else (0.0, 0.0, 0.0),
+            cpu_affinity=cpu_affinity
         )
 
     def discover_benchmarks(self) -> List[str]:
