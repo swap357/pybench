@@ -90,9 +90,24 @@ jobs:
       - name: Launch EC2 instance
         id: launch-instance
         run: |
+          # Check if security group exists and delete if it does
+          SG_NAME="github-runner-setup-sg"
+          EXISTING_SG=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=$SG_NAME" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text || echo "")
+          
+          if [ ! -z "$EXISTING_SG" ] && [ "$EXISTING_SG" != "None" ]; then
+            echo "Deleting existing security group..."
+            aws ec2 delete-security-group --group-id $EXISTING_SG || true
+            # Wait a bit for deletion to propagate
+            sleep 10
+          fi
+          
           # Create security group
+          echo "Creating new security group..."
           SG_ID=$(aws ec2 create-security-group \
-            --group-name github-runner-setup-sg \
+            --group-name $SG_NAME \
             --description "Temporary SG for GitHub Runner AMI setup" \
             --query 'GroupId' --output text)
           
@@ -104,6 +119,7 @@ jobs:
             --cidr 0.0.0.0/0
           
           # Launch instance
+          echo "Launching EC2 instance..."
           INSTANCE_ID=$(aws ec2 run-instances \
             --image-id ami-01a8b7cc84780badb \
             --instance-type ${{ inputs.instance_type }} \
@@ -114,6 +130,7 @@ jobs:
             --query 'Instances[0].InstanceId' \
             --output text)
           
+          # Save outputs
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
           echo "sg_id=$SG_ID" >> $GITHUB_OUTPUT
           
@@ -184,17 +201,26 @@ jobs:
       - name: Cleanup resources
         if: always()
         run: |
-          # Terminate instance
-          aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          # Only terminate instance if it exists
+          if [ ! -z "${{ steps.launch-instance.outputs.instance_id }}" ]; then
+            echo "Terminating instance..."
+            aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+            aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          fi
           
-          # Wait for instance termination
-          aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          # Only delete security group if it exists
+          if [ ! -z "${{ steps.launch-instance.outputs.sg_id }}" ]; then
+            echo "Deleting security group..."
+            # Wait a bit for instance termination to fully propagate
+            sleep 10
+            aws ec2 delete-security-group --group-id ${{ steps.launch-instance.outputs.sg_id }} || true
+          fi
           
-          # Delete security group
-          aws ec2 delete-security-group --group-id ${{ steps.launch-instance.outputs.sg_id }}
-          
-          # Delete key pair
-          aws ec2 delete-key-pair --key-name github-runner-key
+          # Delete key pair if it exists
+          if aws ec2 describe-key-pairs --key-names github-runner-key >/dev/null 2>&1; then
+            echo "Deleting key pair..."
+            aws ec2 delete-key-pair --key-name github-runner-key
+          fi
 
       - name: Output AMI ID
         run: |
