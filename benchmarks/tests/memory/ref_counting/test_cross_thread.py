@@ -20,7 +20,7 @@ class TestObject:
         self.data = [i for i in range(100)]  # Some data to make object substantial
 
 def main():
-    iterations = 1_000_000
+    iterations = 100_000
     num_threads = 4
     threads = []
     shared_queue = queue.Queue()
