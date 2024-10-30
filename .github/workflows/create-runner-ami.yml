@@ -90,26 +90,43 @@ jobs:
       - name: Launch EC2 instance
         id: launch-instance
         run: |
+          # Get default VPC ID
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=isDefault,Values=true" \
+            --query 'Vpcs[0].VpcId' \
+            --output text)
+          
+          if [ -z "$VPC_ID" ]; then
+            echo "No default VPC found. Creating one..."
+            VPC_ID=$(aws ec2 create-default-vpc --query 'Vpc.VpcId' --output text)
+          fi
+          
+          echo "Using VPC: $VPC_ID"
+          
           # Check if security group exists and delete if it does
           SG_NAME="github-runner-setup-sg"
           EXISTING_SG=$(aws ec2 describe-security-groups \
-            --filters "Name=group-name,Values=$SG_NAME" \
+            --filters "Name=group-name,Values=$SG_NAME" "Name=vpc-id,Values=$VPC_ID" \
             --query 'SecurityGroups[0].GroupId' \
             --output text || echo "")
           
           if [ ! -z "$EXISTING_SG" ] && [ "$EXISTING_SG" != "None" ]; then
-            echo "Deleting existing security group..."
+            echo "Deleting existing security group: $EXISTING_SG"
             aws ec2 delete-security-group --group-id $EXISTING_SG || true
             # Wait a bit for deletion to propagate
             sleep 10
           fi
           
-          # Create security group
-          echo "Creating new security group..."
+          # Create security group in VPC
+          echo "Creating new security group in VPC $VPC_ID..."
           SG_ID=$(aws ec2 create-security-group \
             --group-name $SG_NAME \
             --description "Temporary SG for GitHub Runner AMI setup" \
-            --query 'GroupId' --output text)
+            --vpc-id $VPC_ID \
+            --query 'GroupId' \
+            --output text)
+          
+          echo "Created security group: $SG_ID"
           
           # Allow SSH access
           aws ec2 authorize-security-group-ingress \
@@ -118,11 +135,20 @@ jobs:
             --port 22 \
             --cidr 0.0.0.0/0
           
+          # Get subnet ID from VPC
+          SUBNET_ID=$(aws ec2 describe-subnets \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=default-for-az,Values=true" \
+            --query 'Subnets[0].SubnetId' \
+            --output text)
+          
+          echo "Using subnet: $SUBNET_ID"
+          
           # Launch instance
           echo "Launching EC2 instance..."
           INSTANCE_ID=$(aws ec2 run-instances \
             --image-id ami-01a8b7cc84780badb \
             --instance-type ${{ inputs.instance_type }} \
+            --subnet-id $SUBNET_ID \
             --security-group-ids $SG_ID \
             --associate-public-ip-address \
             --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":30,"VolumeType":"gp3"}}]' \
@@ -153,15 +179,23 @@ jobs:
           # Generate key pair
           ssh-keygen -t rsa -b 4096 -f runner_key -N ""
           
+          # Base64 encode the public key
+          PUBLIC_KEY=$(cat runner_key.pub | base64 -w 0)
+          
+          # Check if key pair exists and delete if it does
+          if aws ec2 describe-key-pairs --key-names github-runner-key >/dev/null 2>&1; then
+            echo "Deleting existing key pair..."
+            aws ec2 delete-key-pair --key-name github-runner-key
+          fi
+          
           # Import key to AWS
+          echo "Importing key pair..."
           aws ec2 import-key-pair \
             --key-name github-runner-key \
-            --public-key-material fileb://runner_key.pub
+            --public-key-material "$PUBLIC_KEY"
           
-          # Update instance with key pair
-          aws ec2 associate-key-pair \
-            --instance-id ${{ steps.launch-instance.outputs.instance_id }} \
-            --key-name github-runner-key
+          # No need to associate key pair - it should be specified at launch time
+          # Modify the launch-instance step instead
 
       - name: Copy and run setup script
         run: |
