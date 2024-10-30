@@ -1,6 +1,6 @@
 """
-Test cross-thread object reference counting.
-Shows overhead of reference counting for shared objects.
+Test to measure performance of cross-thread object sharing.
+Lower performance expected due to reference counting overhead.
 
 Purpose:
 - Measure cross-thread ref counting overhead
@@ -11,56 +11,48 @@ Purpose:
 import time
 import sys
 import threading
-import queue
-
-class TestObject:
-    """Test object that will be shared between threads"""
-    def __init__(self, value):
-        self.value = value
-        self.data = [i for i in range(100)]  # Some data to make object substantial
+from queue import Queue
 
 def main():
     iterations = 100_000
-    num_threads = 4
-    threads = []
-    shared_queue = queue.Queue()
+    shared_queue = Queue(maxsize=1000)  # Bounded queue to prevent memory explosion
+    done = threading.Event()
+    
     start = time.time()
     
     def producer():
-        # Create objects and share them
-        for i in range(iterations):
-            obj = TestObject(i)
-            shared_queue.put(obj)
+        try:
+            for _ in range(iterations):
+                obj = [i for i in range(100)]  # Create substantial object
+                shared_queue.put(obj)
+        finally:
+            done.set()  # Signal completion
     
     def consumer():
-        # Process shared objects
-        received = 0
-        while received < iterations:
-            obj = shared_queue.get()
-            # Force some ref count operations
-            local_ref = obj
-            received += 1
-            if received % 100 == 0:
+        count = 0
+        while count < iterations:
+            try:
+                obj = shared_queue.get(timeout=10.0)  # Timeout to prevent deadlock
+                count += 1
                 shared_queue.task_done()
+            except Queue.Empty:
+                if done.is_set() and shared_queue.empty():
+                    break
     
-    # Start producer
+    # Create and start threads
     producer_thread = threading.Thread(target=producer)
-    producer_thread.start()
+    consumer_thread = threading.Thread(target=consumer)
     
-    # Start consumers
-    for _ in range(num_threads - 1):  # -1 because we have one producer
-        thread = threading.Thread(target=consumer)
-        threads.append(thread)
-        thread.start()
+    producer_thread.start()
+    consumer_thread.start()
     
     # Wait for completion
     producer_thread.join()
-    for thread in threads:
-        thread.join()
+    consumer_thread.join()
     
     duration = time.time() - start
     print(f"Duration: {duration:.4f}")
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

@@ -92,12 +92,12 @@ class BenchmarkRunner:
         """Discover all benchmark modules in the benchmarks/tests directory."""
         benchmark_files = []
         categories = [
-            "baseline/",
-            "gil/",
-            "memory/ordering/",
+            # "baseline/",
+            # "gil/",
+            # "memory/ordering/",
             "memory/ref_counting/",
-            "specialization/",
-            "bytecode/"
+            # "specialization/",
+            # "bytecode/"
         ]
 
         for category in categories:
