@@ -45,9 +45,18 @@ class BenchmarkRunner:
     BASELINE_VERSION = "3.12.7"
 
     def __init__(self, iterations: int = 5, profile: bool = True):
-        self.environments = [
-            PythonEnvironment(version) for version in self.PYTHON_VERSIONS.keys()
-        ]
+        self.environments = []
+        
+        # Initialize environments with proper GIL configuration
+        for version, info in self.PYTHON_VERSIONS.items():
+            env = PythonEnvironment(version)
+            if env.is_free_threaded:
+                if version.endswith('t'):
+                    print(f"Running {version} with GIL disabled")
+                else:
+                    print(f"Running {version} with GIL enabled")
+            self.environments.append(env)
+
         self.benchmark_dir = Path("benchmarks/tests")
         self.baseline_version = self.BASELINE_VERSION
         self.console = Console()
