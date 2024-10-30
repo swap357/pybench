@@ -40,6 +40,54 @@ def update_index_page(json_file='benchmark_results.json', index_file='index.html
     else:
         run_id = timestamp.strftime('%Y%m%d_%H%M%S')
 
+    # Create new index.html if it doesn't exist
+    if not os.path.exists(index_file):
+        html_content = """
+        <html>
+        <head>
+            <title>python free-threading benchmarks</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; max-width: 1400px; margin: 0 auto; }
+                h1, h2 { color: #333; }
+                .header { margin-bottom: 30px; }
+                .repo-link { 
+                    display: inline-block;
+                    margin: 10px 0;
+                    padding: 10px;
+                    background-color: #f8f9fa;
+                    border-radius: 4px;
+                    color: #0366d6;
+                    text-decoration: none;
+                }
+                .repo-link:hover {
+                    background-color: #e9ecef;
+                }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f8f9fa; }
+                .system-info, .git-info { white-space: pre-line; }
+                .timestamp { white-space: nowrap; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>python free-threading benchmarks</h1>
+                <a href="https://github.com/swap357/pybench/" class="repo-link">to GitHub</a>
+            </div>
+            <table>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>System Info</th>
+                    <th>Git Info</th>
+                    <th>Results</th>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+        with open(index_file, 'w') as f:
+            f.write(html_content)
+
     # Read existing index.html
     with open(index_file, 'r') as f:
         soup = BeautifulSoup(f.read(), 'html.parser')
