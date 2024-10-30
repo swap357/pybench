@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       build_from_source:
-        description: 'Build Python from source'
+        description: 'Build Python versions from source'
         required: false
         default: 'true'
       profile_level:
@@ -19,6 +19,18 @@ on:
         description: 'EC2 instance type'
         required: false
         default: 'c5.2xlarge'
+      cpu_pinning:
+        description: 'Enable CPU pinning (yes/no)'
+        required: false
+        default: 'no'
+      cpu_cores:
+        description: 'Number of CPU cores to use (all for max)'
+        required: false
+        default: 'all'
+      thread_limit:
+        description: 'Thread limit per core (0 for unlimited)'
+        required: false
+        default: '1'
 
 permissions:
   contents: write
@@ -46,10 +58,8 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ${{ secrets.AWS_AMI_ID }} # Ubuntu 22.04 AMI
+          ec2-image-id: ${{ secrets.AWS_AMI_ID }}
           ec2-instance-type: ${{ inputs.instance_type }}
-          subnet-id: ${{ secrets.AWS_SUBNET_ID }}
-          security-group-id: ${{ secrets.AWS_SECURITY_GROUP_ID }}
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "github-actions-benchmark-runner"},
@@ -65,90 +75,120 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Cache pyenv and Python versions
-      uses: actions/cache@v4
-      id: cache-pyenv
-      with:
-        path: |
-          ~/.pyenv
-        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
-
-    - name: Install system dependencies
+    - name: Verify environment
+      id: verify-env
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
-          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
-          build-essential
-
-    - name: Install and configure pyenv
-      run: |
-        if [ ! -d "$HOME/.pyenv" ]; then
-          curl https://pyenv.run | bash
-        fi
-        
-        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-        echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-        echo 'eval "$(pyenv init -)"' >> ~/.bashrc
-        source ~/.bashrc
-
-        export PYENV_ROOT="$HOME/.pyenv"
-        export PATH="$PYENV_ROOT/bin:$PATH"
-        eval "$(pyenv init -)"
-        
-        which pyenv
-        pyenv --version
-
-    - name: Install default Python
-      run: |
-        export PYENV_ROOT="$HOME/.pyenv"
-        export PATH="$PYENV_ROOT/bin:$PATH"
-        eval "$(pyenv init -)"
-        
-        if ! pyenv versions | grep "3.12.7" > /dev/null; then
-          pyenv install -s 3.12.7
-        fi
-        
-        pyenv global 3.12.7
-        python --version
-
-    - name: Install dependencies
-      run: |
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
-        eval "$(pyenv init -)"
-        python -m pip install --upgrade pip
-        pip install -e .
-
-    - name: Install Python versions
-      run: |
-        export PYENV_ROOT="$HOME/.pyenv"
-        export PATH="$PYENV_ROOT/bin:$PATH"
-        eval "$(pyenv init -)"
-
-        VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
-        
-        pyenv rehash
-        
-        if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
-          for version in $VERSIONS; do
-            if ! pyenv versions | grep "$version" > /dev/null; then
-              pyenv install -s $version --force
-            fi
-          done
+        # Check pyenv installation
+        if ! command -v pyenv &> /dev/null; then
+          echo "pyenv_installed=false" >> $GITHUB_OUTPUT
         else
-          for version in $VERSIONS; do
-            if ! pyenv versions | grep "$version" > /dev/null; then
-              pyenv install $version || pyenv install $version --patch
+          echo "pyenv_installed=true" >> $GITHUB_OUTPUT
+        fi
+        
+        # Load pyenv if it exists
+        if [ -f ~/.bashrc ]; then
+          source ~/.bashrc
+        fi
+        
+        # Check Python versions
+        if [ "${{ steps.verify-env.outputs.pyenv_installed }}" = "true" ]; then
+          REQUIRED_VERSIONS=("3.12.7" "3.13.0" "3.13.0t")
+          MISSING_VERSIONS=()
+          
+          for version in "${REQUIRED_VERSIONS[@]}"; do
+            if ! pyenv versions | grep -q "$version"; then
+              MISSING_VERSIONS+=("$version")
             fi
           done
+          
+          if [ ${#MISSING_VERSIONS[@]} -eq 0 ]; then
+            echo "python_versions_ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "python_versions_ready=false" >> $GITHUB_OUTPUT
+            echo "missing_versions=${MISSING_VERSIONS[*]}" >> $GITHUB_OUTPUT
+          fi
         fi
 
-        pyenv rehash
+    - name: Install missing Python versions
+      if: steps.verify-env.outputs.python_versions_ready != 'true'
+      run: |
+        # Load pyenv
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
         
-        BASELINE=$(python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
-        pyenv global $BASELINE
-        python --version
+        # Install missing versions
+        IFS=' ' read -r -a MISSING_VERSIONS <<< "${{ steps.verify-env.outputs.missing_versions }}"
+        for version in "${MISSING_VERSIONS[@]}"; do
+          if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
+            PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install -v $version
+          else
+            pyenv install -v $version
+          fi
+        done
+        
+        pyenv rehash
+
+    - name: Verify Python packages
+      id: verify-packages
+      run: |
+        # Check for required packages
+        REQUIRED_PACKAGES=("pytest" "pytest-benchmark" "plotly" "kaleido" "beautifulsoup4")
+        MISSING_PACKAGES=()
+        
+        for package in "${REQUIRED_PACKAGES[@]}"; do
+          if ! pip show $package &> /dev/null; then
+            MISSING_PACKAGES+=("$package")
+          fi
+        done
+        
+        if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
+          echo "packages_ready=true" >> $GITHUB_OUTPUT
+        else
+          echo "packages_ready=false" >> $GITHUB_OUTPUT
+          echo "missing_packages=${MISSING_PACKAGES[*]}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Install missing packages
+      if: steps.verify-packages.outputs.packages_ready != 'true'
+      run: |
+        pip install ${steps.verify-packages.outputs.missing_packages}
+
+    - name: Configure CPU settings
+      id: cpu-config
+      run: |
+        # Get total CPU cores
+        TOTAL_CORES=$(nproc)
+        echo "Total available cores: $TOTAL_CORES"
+        
+        # Calculate cores to use
+        if [ "${{ inputs.cpu_cores }}" = "all" ]; then
+          CORES_TO_USE=$TOTAL_CORES
+        else
+          CORES_TO_USE=${{ inputs.cpu_cores }}
+          # Validate core count
+          if [ $CORES_TO_USE -gt $TOTAL_CORES ]; then
+            CORES_TO_USE=$TOTAL_CORES
+          fi
+        fi
+        
+        # Calculate thread limits
+        if [ "${{ inputs.thread_limit }}" = "0" ]; then
+          THREAD_COUNT=$CORES_TO_USE
+        else
+          THREAD_COUNT=$(( CORES_TO_USE * ${{ inputs.thread_limit }} ))
+        fi
+        
+        # Set outputs
+        echo "cores_to_use=$CORES_TO_USE" >> $GITHUB_OUTPUT
+        echo "thread_count=$THREAD_COUNT" >> $GITHUB_OUTPUT
+        
+        # Generate CPU range for taskset
+        if [ $CORES_TO_USE -eq $TOTAL_CORES ]; then
+          echo "cpu_range=0-$(( TOTAL_CORES - 1 ))" >> $GITHUB_OUTPUT
+        else
+          echo "cpu_range=0-$(( CORES_TO_USE - 1 ))" >> $GITHUB_OUTPUT
+        fi
 
     - name: Run benchmarks
       run: |
@@ -156,21 +196,29 @@ jobs:
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
         
-        # Set CPU affinity and thread limits
-        export OMP_NUM_THREADS=4
-        export MKL_NUM_THREADS=4
-        export OPENBLAS_NUM_THREADS=4
-        export VECLIB_MAXIMUM_THREADS=4
-        export NUMEXPR_NUM_THREADS=4
+        # Set thread limits if specified
+        if [ "${{ inputs.thread_limit }}" != "0" ]; then
+          export OMP_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
+          export MKL_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
+          export OPENBLAS_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
+          export VECLIB_MAXIMUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
+          export NUMEXPR_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
+        fi
         
-        taskset -c 0-3 python benchmark_runner.py \
-          --profile ${{ github.event.inputs.profile_level }} \
-          --report-format both \
-          --iterations ${{ github.event.inputs.iterations }}
-
-    - name: Install script dependencies
-      run: |
-        python -m pip install plotly kaleido beautifulsoup4
+        # Run with or without CPU pinning
+        if [ "${{ inputs.cpu_pinning }}" = "yes" ]; then
+          echo "Running with CPU pinning on cores ${{ steps.cpu-config.outputs.cpu_range }}"
+          taskset -c ${{ steps.cpu-config.outputs.cpu_range }} python benchmark_runner.py \
+            --profile ${{ github.event.inputs.profile_level }} \
+            --report-format both \
+            --iterations ${{ github.event.inputs.iterations }}
+        else
+          echo "Running without CPU pinning, using ${{ steps.cpu-config.outputs.cores_to_use }} cores"
+          python benchmark_runner.py \
+            --profile ${{ github.event.inputs.profile_level }} \
+            --report-format both \
+            --iterations ${{ github.event.inputs.iterations }}
+        fi
 
     - name: Publish Results
       env:
