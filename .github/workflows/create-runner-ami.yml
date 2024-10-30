@@ -1,0 +1,202 @@
+name: Create Runner AMI
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance_type:
+        description: 'EC2 instance type for setup'
+        required: false
+        default: 'c5.2xlarge'
+      python_source_build:
+        description: 'Build Python versions from source'
+        required: false
+        default: 'true'
+
+jobs:
+  create-ami:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create setup script
+        run: |
+          cat << 'EOF' > setup.sh
+          #!/bin/bash
+          set -e
+
+          # Update system and install dependencies
+          sudo apt-get update
+          sudo apt-get install -y \
+            libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
+            libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev \
+            liblzma-dev build-essential git curl wget jq unzip \
+            linux-tools-common linux-tools-generic linux-tools-`uname -r`
+
+          # Install GitHub Actions Runner requirements
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sudo sh get-docker.sh
+          sudo usermod -aG docker ubuntu
+          sudo systemctl enable docker
+
+          # Install pyenv
+          curl https://pyenv.run | bash
+
+          # Configure pyenv in bash profile
+          echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+          echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+          echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+          
+          # Load pyenv for current session
+          export PYENV_ROOT="$HOME/.pyenv"
+          export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init -)"
+
+          # Install Python versions
+          PYTHON_VERSIONS=(
+            "3.12.7"  # Default version
+            "3.13.0"
+            "3.13.0t"
+          )
+
+          for version in "${PYTHON_VERSIONS[@]}"; do
+            if [ "${{ github.event.inputs.python_source_build }}" == "true" ]; then
+              PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install -v $version
+            else
+              pyenv install -v $version
+            fi
+          done
+
+          # Set default Python version
+          pyenv global 3.12.7
+
+          # Install common Python packages
+          pip install --upgrade pip
+          pip install pytest pytest-benchmark plotly kaleido beautifulsoup4
+
+          # Clean up
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          EOF
+
+          chmod +x setup.sh
+
+      - name: Launch EC2 instance
+        id: launch-instance
+        run: |
+          # Create security group
+          SG_ID=$(aws ec2 create-security-group \
+            --group-name github-runner-setup-sg \
+            --description "Temporary SG for GitHub Runner AMI setup" \
+            --query 'GroupId' --output text)
+          
+          # Allow SSH access
+          aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr 0.0.0.0/0
+          
+          # Launch instance
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ami-0c7217cdde317cfec \
+            --instance-type ${{ inputs.instance_type }} \
+            --security-group-ids $SG_ID \
+            --associate-public-ip-address \
+            --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":30,"VolumeType":"gp3"}}]' \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=github-runner-setup}]' \
+            --query 'Instances[0].InstanceId' \
+            --output text)
+          
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "sg_id=$SG_ID" >> $GITHUB_OUTPUT
+          
+          # Wait for instance to be running
+          aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+          
+          # Get instance public IP
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+
+      - name: Wait for instance boot
+        run: sleep 60
+
+      - name: Setup SSH key
+        run: |
+          # Generate key pair
+          ssh-keygen -t rsa -b 4096 -f runner_key -N ""
+          
+          # Import key to AWS
+          aws ec2 import-key-pair \
+            --key-name github-runner-key \
+            --public-key-material fileb://runner_key.pub
+          
+          # Update instance with key pair
+          aws ec2 associate-key-pair \
+            --instance-id ${{ steps.launch-instance.outputs.instance_id }} \
+            --key-name github-runner-key
+
+      - name: Copy and run setup script
+        run: |
+          # Wait for SSH to be available
+          while ! nc -z ${{ steps.launch-instance.outputs.public_ip }} 22; do
+            sleep 5
+          done
+          
+          # Copy setup script
+          scp -o StrictHostKeyChecking=no -i runner_key setup.sh ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/
+          
+          # Run setup script
+          ssh -o StrictHostKeyChecking=no -i runner_key ubuntu@${{ steps.launch-instance.outputs.public_ip }} \
+            "bash ~/setup.sh"
+
+      - name: Create AMI
+        id: create-ami
+        run: |
+          # Stop instance
+          aws ec2 stop-instances --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          aws ec2 wait instance-stopped --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          
+          # Create AMI
+          AMI_ID=$(aws ec2 create-image \
+            --instance-id ${{ steps.launch-instance.outputs.instance_id }} \
+            --name "github-runner-ami-$(date +%Y%m%d-%H%M%S)" \
+            --description "GitHub Runner AMI with Python versions and dependencies" \
+            --tag-specifications 'ResourceType=image,Tags=[{Key=Purpose,Value=GitHubRunner}]' \
+            --query 'ImageId' \
+            --output text)
+          
+          echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
+          
+          # Wait for AMI to be available
+          aws ec2 wait image-available --image-ids $AMI_ID
+
+      - name: Cleanup resources
+        if: always()
+        run: |
+          # Terminate instance
+          aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          
+          # Wait for instance termination
+          aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          
+          # Delete security group
+          aws ec2 delete-security-group --group-id ${{ steps.launch-instance.outputs.sg_id }}
+          
+          # Delete key pair
+          aws ec2 delete-key-pair --key-name github-runner-key
+
+      - name: Output AMI ID
+        run: |
+          echo "Created AMI ID: ${{ steps.create-ami.outputs.ami_id }}"
+          echo "Please update AWS_AMI_ID secret with this value" 

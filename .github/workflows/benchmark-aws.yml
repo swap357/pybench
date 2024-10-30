@@ -1,0 +1,241 @@
+name: Benchmark-AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_from_source:
+        description: 'Build Python from source'
+        required: false
+        default: 'true'
+      profile_level:
+        description: 'Profiling level (basic/detailed/none)'
+        required: false
+        default: 'basic'
+      iterations:
+        description: 'Number of benchmark iterations'
+        required: false
+        default: '5'
+      instance_type:
+        description: 'EC2 instance type'
+        required: false
+        default: 'c5.2xlarge'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  start-runner:
+    name: Start EC2 Runner
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ${{ secrets.AWS_AMI_ID }} # Ubuntu 22.04 AMI
+          ec2-instance-type: ${{ inputs.instance_type }}
+          subnet-id: ${{ secrets.AWS_SUBNET_ID }}
+          security-group-id: ${{ secrets.AWS_SECURITY_GROUP_ID }}
+          aws-resource-tags: >
+            [
+              {"Key": "Name", "Value": "github-actions-benchmark-runner"},
+              {"Key": "Project", "Value": "python-benchmarks"},
+              {"Key": "ManagedBy", "Value": "GitHub-Actions"}
+            ]
+
+  benchmark:
+    name: Run Benchmarks
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache pyenv and Python versions
+      uses: actions/cache@v4
+      id: cache-pyenv
+      with:
+        path: |
+          ~/.pyenv
+        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
+          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+          build-essential
+
+    - name: Install and configure pyenv
+      run: |
+        if [ ! -d "$HOME/.pyenv" ]; then
+          curl https://pyenv.run | bash
+        fi
+        
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+        echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+        echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+        source ~/.bashrc
+
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+        
+        which pyenv
+        pyenv --version
+
+    - name: Install default Python
+      run: |
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+        
+        if ! pyenv versions | grep "3.12.7" > /dev/null; then
+          pyenv install -s 3.12.7
+        fi
+        
+        pyenv global 3.12.7
+        python --version
+
+    - name: Install dependencies
+      run: |
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Install Python versions
+      run: |
+        export PYENV_ROOT="$HOME/.pyenv"
+        export PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+
+        VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
+        
+        pyenv rehash
+        
+        if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
+          for version in $VERSIONS; do
+            if ! pyenv versions | grep "$version" > /dev/null; then
+              pyenv install -s $version --force
+            fi
+          done
+        else
+          for version in $VERSIONS; do
+            if ! pyenv versions | grep "$version" > /dev/null; then
+              pyenv install $version || pyenv install $version --patch
+            fi
+          done
+        fi
+
+        pyenv rehash
+        
+        BASELINE=$(python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
+        pyenv global $BASELINE
+        python --version
+
+    - name: Run benchmarks
+      run: |
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        
+        # Set CPU affinity and thread limits
+        export OMP_NUM_THREADS=4
+        export MKL_NUM_THREADS=4
+        export OPENBLAS_NUM_THREADS=4
+        export VECLIB_MAXIMUM_THREADS=4
+        export NUMEXPR_NUM_THREADS=4
+        
+        taskset -c 0-3 python benchmark_runner.py \
+          --profile ${{ github.event.inputs.profile_level }} \
+          --report-format both \
+          --iterations ${{ github.event.inputs.iterations }}
+
+    - name: Install script dependencies
+      run: |
+        python -m pip install plotly kaleido beautifulsoup4
+
+    - name: Publish Results
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        
+        mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
+        cp -r scripts /tmp/benchmark_results/
+        cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
+        
+        python /tmp/benchmark_results/scripts/json_to_html.py \
+          --input-file benchmark_results.json \
+          --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
+          --run-id ${TIMESTAMP}
+        
+        git fetch origin gh-pages
+        
+        if git ls-remote --heads origin gh-pages | grep gh-pages > /dev/null; then
+          git checkout gh-pages
+          git pull origin gh-pages
+        else
+          git checkout --orphan gh-pages
+          git rm -rf .
+          mkdir -p runs
+          cp /tmp/benchmark_results/scripts/index_template.html index.html
+        fi
+        
+        mkdir -p "runs/${TIMESTAMP}"
+        cp -r "/tmp/benchmark_results/runs/${TIMESTAMP}"/* "runs/${TIMESTAMP}/"
+        
+        python /tmp/benchmark_results/scripts/update_index.py \
+          --input-file "runs/${TIMESTAMP}/results.json" \
+          --index-file index.html \
+          --run-id ${TIMESTAMP}
+        
+        rm -rf __pycache__ *.pyc python_benchmark_suite.egg-info benchmark_results.json
+        
+        git add -A
+        
+        if git status --porcelain | grep .; then
+          git commit -m "Add AWS benchmark results for run ${TIMESTAMP}"
+          git push origin gh-pages
+        fi
+
+  stop-runner:
+    name: Stop EC2 Runner
+    needs: [start-runner, benchmark]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Stop EC2 runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
