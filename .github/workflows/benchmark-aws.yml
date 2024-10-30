@@ -147,6 +147,18 @@ jobs:
             sleep 30
           done
           
+          # Create remote directory structure
+          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} "mkdir -p ~/pybench"
+          
+          # Copy entire repository to remote instance
+          scp -o StrictHostKeyChecking=no -i benchmark_key.pem \
+            -r ./* \
+            ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/pybench/
+          
+          # Install package in development mode
+          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} \
+            "cd ~/pybench && pip install -e ."
+          
           # Create benchmark script
           cat << 'EOF' > run_benchmark.sh
           #!/bin/bash
@@ -178,6 +190,8 @@ jobs:
             export NUMEXPR_NUM_THREADS=$THREAD_COUNT
           fi
           
+          cd ~/pybench
+          
           # Run benchmark
           if [ "$3" = "yes" ]; then
             echo "Running with CPU pinning on cores 0-$((CORES_TO_USE - 1))"
@@ -196,9 +210,9 @@ jobs:
           
           chmod +x run_benchmark.sh
           
-          # Copy files to instance
+          # Copy run script
           scp -o StrictHostKeyChecking=no -i benchmark_key.pem \
-            run_benchmark.sh benchmark_runner.py \
+            run_benchmark.sh \
             ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/
           
           # Execute benchmark
@@ -207,7 +221,7 @@ jobs:
           
           # Copy results back
           scp -o StrictHostKeyChecking=no -i benchmark_key.pem \
-            ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/benchmark_results.json .
+            ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/pybench/benchmark_results.json .
 
       - name: Process results
         env:
