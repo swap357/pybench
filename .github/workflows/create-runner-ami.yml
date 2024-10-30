@@ -87,6 +87,29 @@ jobs:
 
           chmod +x setup.sh
 
+      - name: Setup SSH key
+        id: setup-ssh
+        run: |
+          # Generate key pair
+          ssh-keygen -t rsa -b 4096 -f runner_key -N ""
+          
+          # Base64 encode the public key
+          PUBLIC_KEY=$(cat runner_key.pub | base64 -w 0)
+          
+          # Check if key pair exists and delete if it does
+          if aws ec2 describe-key-pairs --key-names github-runner-key >/dev/null 2>&1; then
+            echo "Deleting existing key pair..."
+            aws ec2 delete-key-pair --key-name github-runner-key
+          fi
+          
+          # Import key to AWS
+          echo "Importing key pair..."
+          aws ec2 import-key-pair \
+            --key-name github-runner-key \
+            --public-key-material "$PUBLIC_KEY"
+          
+          chmod 600 runner_key
+
       - name: Launch EC2 instance
         id: launch-instance
         run: |
@@ -143,11 +166,12 @@ jobs:
           
           echo "Using subnet: $SUBNET_ID"
           
-          # Launch instance
+          # Launch instance with key pair
           echo "Launching EC2 instance..."
           INSTANCE_ID=$(aws ec2 run-instances \
             --image-id ami-01a8b7cc84780badb \
             --instance-type ${{ inputs.instance_type }} \
+            --key-name github-runner-key \
             --subnet-id $SUBNET_ID \
             --security-group-ids $SG_ID \
             --associate-public-ip-address \
@@ -174,34 +198,18 @@ jobs:
       - name: Wait for instance boot
         run: sleep 60
 
-      - name: Setup SSH key
-        run: |
-          # Generate key pair
-          ssh-keygen -t rsa -b 4096 -f runner_key -N ""
-          
-          # Base64 encode the public key
-          PUBLIC_KEY=$(cat runner_key.pub | base64 -w 0)
-          
-          # Check if key pair exists and delete if it does
-          if aws ec2 describe-key-pairs --key-names github-runner-key >/dev/null 2>&1; then
-            echo "Deleting existing key pair..."
-            aws ec2 delete-key-pair --key-name github-runner-key
-          fi
-          
-          # Import key to AWS
-          echo "Importing key pair..."
-          aws ec2 import-key-pair \
-            --key-name github-runner-key \
-            --public-key-material "$PUBLIC_KEY"
-          
-          # No need to associate key pair - it should be specified at launch time
-          # Modify the launch-instance step instead
-
       - name: Copy and run setup script
         run: |
-          # Wait for SSH to be available
-          while ! nc -z ${{ steps.launch-instance.outputs.public_ip }} 22; do
-            sleep 5
+          # Debug SSH key permissions
+          ls -l runner_key
+          
+          # Wait for SSH to be available and test connection
+          for i in {1..5}; do
+            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i runner_key ubuntu@${{ steps.launch-instance.outputs.public_ip }} echo "SSH connection successful"; then
+              break
+            fi
+            echo "Waiting for SSH to be available (attempt $i)..."
+            sleep 30
           done
           
           # Copy setup script
