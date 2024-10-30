@@ -38,252 +38,232 @@ permissions:
   id-token: write
 
 jobs:
-  start-runner:
-    name: Start EC2 Runner
+  run-benchmark:
+    name: Run AWS Benchmarks
     runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.start-ec2-runner.outputs.label }}
-      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      
-      - name: Start EC2 runner
-        id: start-ec2-runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ${{ secrets.AWS_AMI_ID }}
-          ec2-instance-type: ${{ inputs.instance_type }}
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "github-actions-benchmark-runner"},
-              {"Key": "Project", "Value": "python-benchmarks"},
-              {"Key": "ManagedBy", "Value": "GitHub-Actions"}
-            ]
-
-  benchmark:
-    name: Run Benchmarks
-    needs: start-runner
-    runs-on: ${{ needs.start-runner.outputs.label }}
     
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Verify environment
-      id: verify-env
-      run: |
-        # Check pyenv installation
-        if ! command -v pyenv &> /dev/null; then
-          echo "pyenv_installed=false" >> $GITHUB_OUTPUT
-        else
-          echo "pyenv_installed=true" >> $GITHUB_OUTPUT
-        fi
-        
-        # Load pyenv if it exists
-        if [ -f ~/.bashrc ]; then
-          source ~/.bashrc
-        fi
-        
-        # Check Python versions
-        if [ "${{ steps.verify-env.outputs.pyenv_installed }}" = "true" ]; then
-          REQUIRED_VERSIONS=("3.12.7" "3.13.0" "3.13.0t")
-          MISSING_VERSIONS=()
-          
-          for version in "${REQUIRED_VERSIONS[@]}"; do
-            if ! pyenv versions | grep -q "$version"; then
-              MISSING_VERSIONS+=("$version")
-            fi
-          done
-          
-          if [ ${#MISSING_VERSIONS[@]} -eq 0 ]; then
-            echo "python_versions_ready=true" >> $GITHUB_OUTPUT
-          else
-            echo "python_versions_ready=false" >> $GITHUB_OUTPUT
-            echo "missing_versions=${MISSING_VERSIONS[*]}" >> $GITHUB_OUTPUT
-          fi
-        fi
-
-    - name: Install missing Python versions
-      if: steps.verify-env.outputs.python_versions_ready != 'true'
-      run: |
-        # Load pyenv
-        export PYENV_ROOT="$HOME/.pyenv"
-        export PATH="$PYENV_ROOT/bin:$PATH"
-        eval "$(pyenv init -)"
-        
-        # Install missing versions
-        IFS=' ' read -r -a MISSING_VERSIONS <<< "${{ steps.verify-env.outputs.missing_versions }}"
-        for version in "${MISSING_VERSIONS[@]}"; do
-          if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
-            PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install -v $version
-          else
-            pyenv install -v $version
-          fi
-        done
-        
-        pyenv rehash
-
-    - name: Verify Python packages
-      id: verify-packages
-      run: |
-        # Check for required packages
-        REQUIRED_PACKAGES=("pytest" "pytest-benchmark" "plotly" "kaleido" "beautifulsoup4")
-        MISSING_PACKAGES=()
-        
-        for package in "${REQUIRED_PACKAGES[@]}"; do
-          if ! pip show $package &> /dev/null; then
-            MISSING_PACKAGES+=("$package")
-          fi
-        done
-        
-        if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
-          echo "packages_ready=true" >> $GITHUB_OUTPUT
-        else
-          echo "packages_ready=false" >> $GITHUB_OUTPUT
-          echo "missing_packages=${MISSING_PACKAGES[*]}" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Install missing packages
-      if: steps.verify-packages.outputs.packages_ready != 'true'
-      run: |
-        pip install ${steps.verify-packages.outputs.missing_packages}
-
-    - name: Configure CPU settings
-      id: cpu-config
-      run: |
-        # Get total CPU cores
-        TOTAL_CORES=$(nproc)
-        echo "Total available cores: $TOTAL_CORES"
-        
-        # Calculate cores to use
-        if [ "${{ inputs.cpu_cores }}" = "all" ]; then
-          CORES_TO_USE=$TOTAL_CORES
-        else
-          CORES_TO_USE=${{ inputs.cpu_cores }}
-          # Validate core count
-          if [ $CORES_TO_USE -gt $TOTAL_CORES ]; then
-            CORES_TO_USE=$TOTAL_CORES
-          fi
-        fi
-        
-        # Calculate thread limits
-        if [ "${{ inputs.thread_limit }}" = "0" ]; then
-          THREAD_COUNT=$CORES_TO_USE
-        else
-          THREAD_COUNT=$(( CORES_TO_USE * ${{ inputs.thread_limit }} ))
-        fi
-        
-        # Set outputs
-        echo "cores_to_use=$CORES_TO_USE" >> $GITHUB_OUTPUT
-        echo "thread_count=$THREAD_COUNT" >> $GITHUB_OUTPUT
-        
-        # Generate CPU range for taskset
-        if [ $CORES_TO_USE -eq $TOTAL_CORES ]; then
-          echo "cpu_range=0-$(( TOTAL_CORES - 1 ))" >> $GITHUB_OUTPUT
-        else
-          echo "cpu_range=0-$(( CORES_TO_USE - 1 ))" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Run benchmarks
-      run: |
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
-        eval "$(pyenv init -)"
-        
-        # Set thread limits if specified
-        if [ "${{ inputs.thread_limit }}" != "0" ]; then
-          export OMP_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
-          export MKL_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
-          export OPENBLAS_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
-          export VECLIB_MAXIMUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
-          export NUMEXPR_NUM_THREADS=${{ steps.cpu-config.outputs.thread_count }}
-        fi
-        
-        # Run with or without CPU pinning
-        if [ "${{ inputs.cpu_pinning }}" = "yes" ]; then
-          echo "Running with CPU pinning on cores ${{ steps.cpu-config.outputs.cpu_range }}"
-          taskset -c ${{ steps.cpu-config.outputs.cpu_range }} python benchmark_runner.py \
-            --profile ${{ github.event.inputs.profile_level }} \
-            --report-format both \
-            --iterations ${{ github.event.inputs.iterations }}
-        else
-          echo "Running without CPU pinning, using ${{ steps.cpu-config.outputs.cores_to_use }} cores"
-          python benchmark_runner.py \
-            --profile ${{ github.event.inputs.profile_level }} \
-            --report-format both \
-            --iterations ${{ github.event.inputs.iterations }}
-        fi
-
-    - name: Publish Results
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        
-        mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
-        cp -r scripts /tmp/benchmark_results/
-        cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
-        
-        python /tmp/benchmark_results/scripts/json_to_html.py \
-          --input-file benchmark_results.json \
-          --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
-          --run-id ${TIMESTAMP}
-        
-        git fetch origin gh-pages
-        
-        if git ls-remote --heads origin gh-pages | grep gh-pages > /dev/null; then
-          git checkout gh-pages
-          git pull origin gh-pages
-        else
-          git checkout --orphan gh-pages
-          git rm -rf .
-          mkdir -p runs
-          cp /tmp/benchmark_results/scripts/index_template.html index.html
-        fi
-        
-        mkdir -p "runs/${TIMESTAMP}"
-        cp -r "/tmp/benchmark_results/runs/${TIMESTAMP}"/* "runs/${TIMESTAMP}/"
-        
-        python /tmp/benchmark_results/scripts/update_index.py \
-          --input-file "runs/${TIMESTAMP}/results.json" \
-          --index-file index.html \
-          --run-id ${TIMESTAMP}
-        
-        rm -rf __pycache__ *.pyc python_benchmark_suite.egg-info benchmark_results.json
-        
-        git add -A
-        
-        if git status --porcelain | grep .; then
-          git commit -m "Add AWS benchmark results for run ${TIMESTAMP}"
-          git push origin gh-pages
-        fi
-
-  stop-runner:
-    name: Stop EC2 Runner
-    needs: [start-runner, benchmark]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Launch EC2 instance
+        id: launch-instance
+        run: |
+          # Get default VPC ID
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=isDefault,Values=true" \
+            --query 'Vpcs[0].VpcId' \
+            --output text)
           
-      - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: stop
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          # Get subnet ID from VPC
+          SUBNET_ID=$(aws ec2 describe-subnets \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=default-for-az,Values=true" \
+            --query 'Subnets[0].SubnetId' \
+            --output text)
+          
+          # Create security group
+          SG_ID=$(aws ec2 create-security-group \
+            --group-name benchmark-runner-sg-$(date +%s) \
+            --description "Temporary SG for benchmark runner" \
+            --vpc-id $VPC_ID \
+            --query 'GroupId' \
+            --output text)
+          
+          # Allow SSH access
+          aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr 0.0.0.0/0
+          
+          # Generate key pair
+          KEY_NAME="benchmark-key-$(date +%s)"
+          aws ec2 create-key-pair \
+            --key-name $KEY_NAME \
+            --query 'KeyMaterial' \
+            --output text > benchmark_key.pem
+          chmod 600 benchmark_key.pem
+          
+          # Launch instance
+          echo "Launching EC2 instance..."
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ${{ secrets.AWS_AMI_ID }} \
+            --instance-type ${{ inputs.instance_type }} \
+            --key-name $KEY_NAME \
+            --subnet-id $SUBNET_ID \
+            --security-group-ids $SG_ID \
+            --associate-public-ip-address \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=benchmark-runner}]' \
+            --query 'Instances[0].InstanceId' \
+            --output text)
+          
+          # Save outputs
+          {
+            echo "instance_id=$INSTANCE_ID"
+            echo "sg_id=$SG_ID"
+            echo "key_name=$KEY_NAME"
+          } >> "$GITHUB_OUTPUT"
+          
+          # Wait for instance to be running
+          aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+          
+          # Get instance public IP
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          
+          echo "public_ip=$PUBLIC_IP" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for instance boot
+        run: sleep 30
+
+      - name: Run benchmarks
+        run: |
+          # Wait for SSH to be available
+          for i in {1..5}; do
+            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} echo "SSH connection successful"; then
+              break
+            fi
+            echo "Waiting for SSH to be available (attempt $i)..."
+            sleep 30
+          done
+          
+          # Create benchmark script
+          cat << 'EOF' > run_benchmark.sh
+          #!/bin/bash
+          set -e
+          
+          # Load pyenv
+          export PYENV_ROOT="$HOME/.pyenv"
+          export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init -)"
+          
+          # Get CPU info
+          TOTAL_CORES=$(nproc)
+          
+          # Set CPU cores
+          if [ "$1" = "all" ]; then
+            CORES_TO_USE=$TOTAL_CORES
+          else
+            CORES_TO_USE=$1
+            [ $CORES_TO_USE -gt $TOTAL_CORES ] && CORES_TO_USE=$TOTAL_CORES
+          fi
+          
+          # Set thread limits
+          if [ "$2" != "0" ]; then
+            THREAD_COUNT=$(( CORES_TO_USE * $2 ))
+            export OMP_NUM_THREADS=$THREAD_COUNT
+            export MKL_NUM_THREADS=$THREAD_COUNT
+            export OPENBLAS_NUM_THREADS=$THREAD_COUNT
+            export VECLIB_MAXIMUM_THREADS=$THREAD_COUNT
+            export NUMEXPR_NUM_THREADS=$THREAD_COUNT
+          fi
+          
+          # Run benchmark
+          if [ "$3" = "yes" ]; then
+            echo "Running with CPU pinning on cores 0-$((CORES_TO_USE - 1))"
+            taskset -c 0-$((CORES_TO_USE - 1)) python benchmark_runner.py \
+              --profile "$4" \
+              --report-format both \
+              --iterations "$5"
+          else
+            echo "Running without CPU pinning, using $CORES_TO_USE cores"
+            python benchmark_runner.py \
+              --profile "$4" \
+              --report-format both \
+              --iterations "$5"
+          fi
+          EOF
+          
+          chmod +x run_benchmark.sh
+          
+          # Copy files to instance
+          scp -o StrictHostKeyChecking=no -i benchmark_key.pem \
+            run_benchmark.sh benchmark_runner.py \
+            ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/
+          
+          # Execute benchmark
+          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} \
+            "./run_benchmark.sh '${{ inputs.cpu_cores }}' '${{ inputs.thread_limit }}' '${{ inputs.cpu_pinning }}' '${{ inputs.profile_level }}' '${{ inputs.iterations }}'"
+          
+          # Copy results back
+          scp -o StrictHostKeyChecking=no -i benchmark_key.pem \
+            ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/benchmark_results.json .
+
+      - name: Process results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          mkdir -p /tmp/benchmark_results/runs/${TIMESTAMP}
+          cp -r scripts /tmp/benchmark_results/
+          cp benchmark_results.json "/tmp/benchmark_results/runs/${TIMESTAMP}/results.json"
+          
+          python /tmp/benchmark_results/scripts/json_to_html.py \
+            --input-file benchmark_results.json \
+            --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
+            --run-id "${TIMESTAMP}"
+          
+          git fetch origin gh-pages
+          
+          if git ls-remote --heads origin gh-pages | grep gh-pages > /dev/null; then
+            git checkout gh-pages
+            git pull origin gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+            mkdir -p runs
+            cp /tmp/benchmark_results/scripts/index_template.html index.html
+          fi
+          
+          mkdir -p "runs/${TIMESTAMP}"
+          cp -r "/tmp/benchmark_results/runs/${TIMESTAMP}"/* "runs/${TIMESTAMP}/"
+          
+          python /tmp/benchmark_results/scripts/update_index.py \
+            --input-file "runs/${TIMESTAMP}/results.json" \
+            --index-file index.html \
+            --run-id "${TIMESTAMP}"
+          
+          rm -rf __pycache__ *.pyc python_benchmark_suite.egg-info benchmark_results.json
+          
+          git add -A
+          
+          if git status --porcelain | grep .; then
+            git commit -m "Add AWS benchmark results for run ${TIMESTAMP}"
+            git push origin gh-pages
+          fi
+
+      - name: Cleanup resources
+        if: always()
+        run: |
+          # Terminate instance
+          if [ -n "${{ steps.launch-instance.outputs.instance_id }}" ]; then
+            echo "Terminating instance..."
+            aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+            aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.instance_id }}
+          fi
+          
+          # Delete security group
+          if [ -n "${{ steps.launch-instance.outputs.sg_id }}" ]; then
+            echo "Deleting security group..."
+            sleep 10  # Wait for instance termination to propagate
+            aws ec2 delete-security-group --group-id ${{ steps.launch-instance.outputs.sg_id }} || true
+          fi
+          
+          # Delete key pair
+          if [ -n "${{ steps.launch-instance.outputs.key_name }}" ]; then
+            echo "Deleting key pair..."
+            aws ec2 delete-key-pair --key-name ${{ steps.launch-instance.outputs.key_name }}
+          fi
