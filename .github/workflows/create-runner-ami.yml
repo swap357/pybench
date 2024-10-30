@@ -105,7 +105,7 @@ jobs:
           
           # Launch instance
           INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id ami-0c7217cdde317cfec \
+            --image-id ami-01a8b7cc84780badb \
             --instance-type ${{ inputs.instance_type }} \
             --security-group-ids $SG_ID \
             --associate-public-ip-address \
