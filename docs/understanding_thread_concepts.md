@@ -35,10 +35,10 @@ Biased Reference Counting:
 Thread1    Memory     Thread2
    │     [refcount]     │
    │      [bias]        │
-   ├──���──fast─┐         │
-   │    inc   │         │
-   │    dec   │         │
-   │          └──slow───┤
+   ├───fast─┐           │
+   │    inc │           │
+   │    dec │           │
+   │        └──slow─────┤
    │                    │
 ```
 
