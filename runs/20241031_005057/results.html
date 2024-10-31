@@ -1,0 +1,736 @@
+
+    <html>
+    <head>
+        <title>Benchmark results: 20241031_005057</title>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; max-width: 1400px; margin: 0 auto; }
+            h1, h2 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+            tr.header { background-color: #f8f9fa; font-weight: bold; }
+            tr.baseline { background-color: #f8f9fa; }
+            .system-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .system-info li { margin-bottom: 5px; }
+            .plot-container { margin: 30px 0; }
+            .timestamp { color: #666; font-size: 0.9em; margin-top: 10px; }
+            .breadcrumb { 
+                padding: 10px 0;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .breadcrumb a { 
+                color: #0366d6;
+                text-decoration: none;
+            }
+            .breadcrumb a:hover { 
+                text-decoration: underline;
+            }
+            .breadcrumb span { 
+                color: #666;
+                margin: 0 5px;
+            }
+            .info-section {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            .info-section h2 {
+                margin-top: 0;
+            }
+            .info-section li {
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="breadcrumb">
+            <a href="../../index.html">← Back to index</a>
+        </div>
+        <h1>Benchmark Results</h1>
+        
+        <div class="info-section">
+            <h2>Run Configuration</h2>
+            <ul>
+                <li><strong>Run ID:</strong> 20241031_005057</li>
+                <li><strong>Iterations:</strong> 5</li>
+                <li><strong>Profile Level:</strong> basic</li>
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h2>System Information</h2>
+            <ul>
+                <li><strong>CPU Count:</strong> 8</li>
+                <li><strong>CPU Affinity:</strong> cores 0-7</li>
+                <li><strong>Total Memory:</strong> 15.25 GB</li>
+                <li><strong>OS:</strong> Linux 6.8.0-1016-aws</li>
+                <li><strong>CPU Frequency:</strong> 3299.15 MHz</li>
+                <li><strong>Load Average:</strong> [0.37, 0.10, 0.03]</li>
+            </ul>
+        </div>
+
+        <div class="plot-container">
+            <div id="perf_comparison" style="width:100%;height:800px;"></div>
+        </div>
+        <div class="plot-container">
+            <div id="exec_time" style="width:100%;height:800px;"></div>
+        </div>
+    
+        <script>
+            const perfComparisonData = [{"type": "bar", "name": "3.13.0t", "x": [117.56, 94.23, 220.31, 34.89, 216.5, 176.77, 138.46, 164.53, 115.61, 143.17, 286.7, 30.5, 125.5, 133.98, 165.68], "y": ["baseline/test_thread_mgmt_overhead", "baseline/test_memory_ops_overhead", "baseline/test_cpu_ops", "gil/test_contention", "gil/test_lock_patterns", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_alignment", "memory/ordering/test_strided_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch"], "orientation": "h", "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [101.64, 79.19, 94.04, 99.58, 69.27, 110.95, 127.82, 97.29, 102.3, 121.41, 85.64, 88.42, 96.61, 101.11, 106.21], "y": ["baseline/test_thread_mgmt_overhead", "baseline/test_memory_ops_overhead", "baseline/test_cpu_ops", "gil/test_contention", "gil/test_lock_patterns", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_alignment", "memory/ordering/test_strided_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch"], "orientation": "h", "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100], "y": ["baseline/test_thread_mgmt_overhead", "baseline/test_memory_ops_overhead", "baseline/test_cpu_ops", "gil/test_contention", "gil/test_lock_patterns", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_alignment", "memory/ordering/test_strided_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch"], "orientation": "h", "marker": {"color": "#757575"}}];
+            const perfComparisonLayout = {"title": "Execution Time Comparison Across Tests", "xaxis": {"title": "Execution Time Increase (%)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('perf_comparison', perfComparisonData, perfComparisonLayout);
+
+            const execTimeData = [{"type": "bar", "name": "3.13.0t", "x": [0.14536046981811523, 0.06575489044189453, 0.4480562210083008, 0.11806964874267578, 2.0722815990448, 0.8294937610626221, 14.349431991577148, 0.8533143997192383, 10.85932207107544, 1.9348626136779785, 1.7506999969482422, 0.2975435256958008, 1.074059009552002, 1.0699594020843506, 1.1631364822387695], "y": ["baseline/test_thread_mgmt_overhead", "baseline/test_memory_ops_overhead", "baseline/test_cpu_ops", "gil/test_contention", "gil/test_lock_patterns", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_alignment", "memory/ordering/test_strided_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch"], "orientation": "h", "error_x": {"type": "data", "array": [0.0016129216614421797, 0.00046835734210816767, 0.007164656215988053, 0.000964325213848956, 0.03606387298533687, 0.241871350637646, 0.07397331405636313, 0.03449450112788244, 0.08184875328701476, 0.09548722339993007, 0.14211684063814517, 0.0012292672626378262, 0.004474914054747161, 0.006289103381721306, 0.029694271099189647], "visible": true}, "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [0.12595701217651367, 0.055055856704711914, 0.19275808334350586, 0.3348994255065918, 0.6398561000823975, 0.5194990634918213, 13.24337387084961, 0.5088098049163818, 9.561179399490356, 1.6790592670440674, 0.5199153423309326, 0.8548319339752197, 0.7851734161376953, 0.8119492530822754, 0.7487859725952148], "y": ["baseline/test_thread_mgmt_overhead", "baseline/test_memory_ops_overhead", "baseline/test_cpu_ops", "gil/test_contention", "gil/test_lock_patterns", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_alignment", "memory/ordering/test_strided_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch"], "orientation": "h", "error_x": {"type": "data", "array": [0.00134957959291156, 0.0010140233531230783, 0.004751124461128749, 0.008070350488332115, 0.0465586650979388, 0.15411916338190945, 0.7585118450512012, 0.0011132278045465128, 0.2958089420167173, 0.028889780153314146, 0.002395393787431127, 0.011782088004541698, 0.09724172322963952, 0.027457300659248524, 0.0378527741934915], "visible": true}, "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [0.12335205078125, 0.0697474479675293, 0.20240378379821777, 0.33898448944091797, 0.6629817485809326, 0.5258171558380127, 10.34856104850769, 0.5225296020507812, 9.34862756729126, 1.3758924007415771, 0.6064581871032715, 0.9743232727050781, 0.8523721694946289, 0.7991163730621338, 0.6982898712158203], "y": ["baseline/test_thread_mgmt_overhead", "baseline/test_memory_ops_overhead", "baseline/test_cpu_ops", "gil/test_contention", "gil/test_lock_patterns", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_alignment", "memory/ordering/test_strided_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch"], "orientation": "h", "error_x": {"type": "data", "array": [0.0007090894737128771, 0.00038052361105579333, 0.0031588882568763725, 0.0013627883914423518, 0.656464066921411, 0.003356916163579436, 0.24276693836346785, 0.0016640135127319333, 0.2301417655144341, 0.009040953024795961, 0.0012521056077722241, 0.0038998719359743467, 0.010983399388181242, 0.001373532192506886, 0.0010159548600225516], "visible": true}, "marker": {"color": "#757575"}}];
+            const execTimeLayout = {"title": "Median Execution Time with Error Bars", "xaxis": {"title": "Median Execution Time (s)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('exec_time', execTimeData, execTimeLayout);
+        </script>
+    <h2>Statistics</h2><table>
+            <tr class="header">
+                <td colspan="7">baseline/test_thread_mgmt_overhead</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.1234</td>
+                    <td>0.0007</td>
+                    <td>0.1234</td>
+                    <td>0.1224</td>
+                    <td>0.1243</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.1260</td>
+                    <td>0.0013</td>
+                    <td>0.1254</td>
+                    <td>0.1233</td>
+                    <td>0.1268</td>
+                    <td>101.64%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.1454</td>
+                    <td>0.0016</td>
+                    <td>0.1450</td>
+                    <td>0.1427</td>
+                    <td>0.1471</td>
+                    <td>117.56%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">baseline/test_memory_ops_overhead</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.0697</td>
+                    <td>0.0004</td>
+                    <td>0.0698</td>
+                    <td>0.0693</td>
+                    <td>0.0702</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.0551</td>
+                    <td>0.0010</td>
+                    <td>0.0553</td>
+                    <td>0.0543</td>
+                    <td>0.0568</td>
+                    <td>79.19%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.0658</td>
+                    <td>0.0005</td>
+                    <td>0.0658</td>
+                    <td>0.0655</td>
+                    <td>0.0666</td>
+                    <td>94.23%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">baseline/test_cpu_ops</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.2024</td>
+                    <td>0.0032</td>
+                    <td>0.2031</td>
+                    <td>0.1999</td>
+                    <td>0.2070</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.1928</td>
+                    <td>0.0048</td>
+                    <td>0.1910</td>
+                    <td>0.1853</td>
+                    <td>0.1963</td>
+                    <td>94.04%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.4481</td>
+                    <td>0.0072</td>
+                    <td>0.4475</td>
+                    <td>0.4380</td>
+                    <td>0.4570</td>
+                    <td>220.31%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">gil/test_contention</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.3390</td>
+                    <td>0.0014</td>
+                    <td>0.3390</td>
+                    <td>0.3373</td>
+                    <td>0.3411</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.3349</td>
+                    <td>0.0081</td>
+                    <td>0.3376</td>
+                    <td>0.3330</td>
+                    <td>0.3520</td>
+                    <td>99.58%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.1181</td>
+                    <td>0.0010</td>
+                    <td>0.1183</td>
+                    <td>0.1171</td>
+                    <td>0.1196</td>
+                    <td>34.89%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">gil/test_lock_patterns</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.6630</td>
+                    <td>0.6565</td>
+                    <td>0.9617</td>
+                    <td>0.6380</td>
+                    <td>2.1351</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.6399</td>
+                    <td>0.0466</td>
+                    <td>0.6662</td>
+                    <td>0.6245</td>
+                    <td>0.7324</td>
+                    <td>69.27%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>2.0723</td>
+                    <td>0.0361</td>
+                    <td>2.0820</td>
+                    <td>2.0335</td>
+                    <td>2.1292</td>
+                    <td>216.50%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_false_sharing_padded</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.5258</td>
+                    <td>0.0034</td>
+                    <td>0.5278</td>
+                    <td>0.5256</td>
+                    <td>0.5335</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.5195</td>
+                    <td>0.1541</td>
+                    <td>0.5857</td>
+                    <td>0.5112</td>
+                    <td>0.8612</td>
+                    <td>110.95%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.8295</td>
+                    <td>0.2419</td>
+                    <td>0.9330</td>
+                    <td>0.8102</td>
+                    <td>1.3653</td>
+                    <td>176.77%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_sequential_access</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>10.3486</td>
+                    <td>0.2428</td>
+                    <td>10.3919</td>
+                    <td>10.1814</td>
+                    <td>10.7979</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>13.2434</td>
+                    <td>0.7585</td>
+                    <td>13.2831</td>
+                    <td>12.5213</td>
+                    <td>14.5280</td>
+                    <td>127.82%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>14.3494</td>
+                    <td>0.0740</td>
+                    <td>14.3888</td>
+                    <td>14.3232</td>
+                    <td>14.4821</td>
+                    <td>138.46%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_false_sharing_baseline</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.5225</td>
+                    <td>0.0017</td>
+                    <td>0.5234</td>
+                    <td>0.5225</td>
+                    <td>0.5263</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.5088</td>
+                    <td>0.0011</td>
+                    <td>0.5091</td>
+                    <td>0.5081</td>
+                    <td>0.5109</td>
+                    <td>97.29%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.8533</td>
+                    <td>0.0345</td>
+                    <td>0.8611</td>
+                    <td>0.8205</td>
+                    <td>0.9100</td>
+                    <td>164.53%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_alignment</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>9.3486</td>
+                    <td>0.2301</td>
+                    <td>9.4085</td>
+                    <td>9.1938</td>
+                    <td>9.7694</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>9.5612</td>
+                    <td>0.2958</td>
+                    <td>9.6252</td>
+                    <td>9.3628</td>
+                    <td>10.1210</td>
+                    <td>102.30%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>10.8593</td>
+                    <td>0.0818</td>
+                    <td>10.8776</td>
+                    <td>10.7871</td>
+                    <td>11.0038</td>
+                    <td>115.61%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_strided_access</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>1.3759</td>
+                    <td>0.0090</td>
+                    <td>1.3797</td>
+                    <td>1.3742</td>
+                    <td>1.3957</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>1.6791</td>
+                    <td>0.0289</td>
+                    <td>1.6752</td>
+                    <td>1.6484</td>
+                    <td>1.7183</td>
+                    <td>121.41%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>1.9349</td>
+                    <td>0.0955</td>
+                    <td>1.9754</td>
+                    <td>1.9284</td>
+                    <td>2.1460</td>
+                    <td>143.17%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ref_counting/test_cross_thread</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.6065</td>
+                    <td>0.0013</td>
+                    <td>0.6066</td>
+                    <td>0.6047</td>
+                    <td>0.6080</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.5199</td>
+                    <td>0.0024</td>
+                    <td>0.5194</td>
+                    <td>0.5158</td>
+                    <td>0.5219</td>
+                    <td>85.64%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>1.7507</td>
+                    <td>0.1421</td>
+                    <td>1.7390</td>
+                    <td>1.5378</td>
+                    <td>1.9376</td>
+                    <td>286.70%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">memory/ref_counting/test_thread_local</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.9743</td>
+                    <td>0.0039</td>
+                    <td>0.9735</td>
+                    <td>0.9678</td>
+                    <td>0.9781</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.8548</td>
+                    <td>0.0118</td>
+                    <td>0.8608</td>
+                    <td>0.8512</td>
+                    <td>0.8791</td>
+                    <td>88.42%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>0.2975</td>
+                    <td>0.0012</td>
+                    <td>0.2970</td>
+                    <td>0.2951</td>
+                    <td>0.2981</td>
+                    <td>30.50%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">specialization/test_dynamic_operations</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.8524</td>
+                    <td>0.0110</td>
+                    <td>0.8553</td>
+                    <td>0.8454</td>
+                    <td>0.8717</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.7852</td>
+                    <td>0.0972</td>
+                    <td>0.8264</td>
+                    <td>0.7779</td>
+                    <td>1.0001</td>
+                    <td>96.61%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>1.0741</td>
+                    <td>0.0045</td>
+                    <td>1.0734</td>
+                    <td>1.0669</td>
+                    <td>1.0794</td>
+                    <td>125.50%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">specialization/test_typed_operations</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.7991</td>
+                    <td>0.0014</td>
+                    <td>0.7987</td>
+                    <td>0.7973</td>
+                    <td>0.8004</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.8119</td>
+                    <td>0.0275</td>
+                    <td>0.8076</td>
+                    <td>0.7772</td>
+                    <td>0.8440</td>
+                    <td>101.11%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>1.0700</td>
+                    <td>0.0063</td>
+                    <td>1.0701</td>
+                    <td>1.0647</td>
+                    <td>1.0804</td>
+                    <td>133.98%</td>
+                </tr>
+                
+            <tr class="header">
+                <td colspan="7">bytecode/test_bytecode_dispatch</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+                <tr class="baseline">
+                    <td>3.12.7</td>
+                    <td>0.6983</td>
+                    <td>0.0010</td>
+                    <td>0.6985</td>
+                    <td>0.6975</td>
+                    <td>0.6998</td>
+                    <td>100.00%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0</td>
+                    <td>0.7488</td>
+                    <td>0.0379</td>
+                    <td>0.7419</td>
+                    <td>0.6789</td>
+                    <td>0.7807</td>
+                    <td>106.21%</td>
+                </tr>
+                
+                <tr class="">
+                    <td>3.13.0t</td>
+                    <td>1.1631</td>
+                    <td>0.0297</td>
+                    <td>1.1574</td>
+                    <td>1.1260</td>
+                    <td>1.1863</td>
+                    <td>165.68%</td>
+                </tr>
+                </table></body></html>
