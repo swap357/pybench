@@ -231,6 +231,10 @@ jobs:
           scp -o StrictHostKeyChecking=no -i benchmark_key.pem \
             ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/pybench/benchmark_results.json .
 
+      - name: Install script dependencies
+        run: |
+          python -m pip install plotly kaleido beautifulsoup4
+
       - name: Process results
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
