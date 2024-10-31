@@ -147,6 +147,33 @@ jobs:
             sleep 30
           done
           
+          # Install system dependencies
+          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} "
+            sudo apt-get update && \
+            sudo apt-get install -y \
+              python3-pip
+          "
+          
+          # Install and configure pyenv
+          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} "
+            curl https://pyenv.run | bash && \
+            echo 'export PYENV_ROOT=\"\$HOME/.pyenv\"' >> ~/.bashrc && \
+            echo 'export PATH=\"\$PYENV_ROOT/bin:\$PATH\"' >> ~/.bashrc && \
+            echo 'eval \"\$(pyenv init -)\"' >> ~/.bashrc && \
+            source ~/.bashrc && \
+            export PYENV_ROOT=\"\$HOME/.pyenv\" && \
+            export PATH=\"\$PYENV_ROOT/bin:\$PATH\" && \
+            eval \"\$(pyenv init -)\" && \
+            
+            # Install Python 3.12.7 as default
+            pyenv install -s 3.12.7 && \
+            pyenv global 3.12.7 && \
+            python --version && \
+            
+            # Upgrade pip
+            python -m pip install --upgrade pip
+          "
+          
           # Create remote directory structure
           ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} "mkdir -p ~/pybench"
           
@@ -156,9 +183,14 @@ jobs:
             ubuntu@${{ steps.launch-instance.outputs.public_ip }}:~/pybench/
           
           # Install package in development mode
-          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} \
-            "cd ~/pybench && pip install -e ."
-          
+          ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} "
+            export PYENV_ROOT=\"\$HOME/.pyenv\" && \
+            export PATH=\"\$PYENV_ROOT/bin:\$PATH\" && \
+            eval \"\$(pyenv init -)\" && \
+            cd ~/pybench && \
+            pip install -e .
+          "
+
           # Create benchmark script
           cat << 'EOF' > run_benchmark.sh
           #!/bin/bash
@@ -168,6 +200,18 @@ jobs:
           export PYENV_ROOT="$HOME/.pyenv"
           export PATH="$PYENV_ROOT/bin:$PATH"
           eval "$(pyenv init -)"
+          
+          # Install required Python versions
+          VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
+          
+          for version in $VERSIONS; do
+            if ! pyenv versions | grep "$version" > /dev/null; then
+              echo "Installing Python $version..."
+              pyenv install -s $version
+            fi
+          done
+          
+          pyenv rehash
           
           # Get CPU info
           TOTAL_CORES=$(nproc)
