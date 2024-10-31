@@ -64,13 +64,34 @@ class BenchmarkRunner:
         self.profile = profile
         self.system_info = self._collect_system_info()
 
-        # Set number of threads based on available cores
+        # Set number of threads based on available cores or affinity
         try:
             process = psutil.Process()
             affinity = process.cpu_affinity()
             self.num_threads = len(affinity)  # Use number of available cores in affinity mask
         except (AttributeError, psutil.Error):
             self.num_threads = multiprocessing.cpu_count()  # Fallback to all cores
+
+        # Add CPU core limit parameter
+        self.cpu_cores = os.environ.get('BENCHMARK_CPU_CORES', 'all')
+        if self.cpu_cores != 'all':
+            try:
+                self.num_threads = min(int(self.cpu_cores), self.num_threads)
+            except ValueError:
+                pass
+
+        # Add thread limit per core
+        thread_limit = os.environ.get('BENCHMARK_THREAD_LIMIT', '1')
+        try:
+            if thread_limit != '0':
+                self.thread_limit = int(thread_limit)
+                self.total_threads = self.num_threads * self.thread_limit
+            else:
+                self.thread_limit = 0
+                self.total_threads = None
+        except ValueError:
+            self.thread_limit = 1
+            self.total_threads = self.num_threads
 
     def _collect_system_info(self) -> SystemMetrics:
         """Collect system-wide metrics."""
@@ -132,8 +153,20 @@ class BenchmarkRunner:
             "metadata": self.PYTHON_VERSIONS
         }
 
+    def _set_thread_limits(self):
+        """Set thread limits for benchmarks based on configuration"""
+        if self.total_threads is not None:
+            os.environ['OMP_NUM_THREADS'] = str(self.total_threads)
+            os.environ['MKL_NUM_THREADS'] = str(self.total_threads)
+            os.environ['OPENBLAS_NUM_THREADS'] = str(self.total_threads)
+            os.environ['VECLIB_MAXIMUM_THREADS'] = str(self.total_threads)
+            os.environ['NUMEXPR_NUM_THREADS'] = str(self.total_threads)
+
     def run_all(self) -> Dict[str, Dict]:
         """Run all discovered benchmarks and collect results."""
+        # Set thread limits before running benchmarks
+        self._set_thread_limits()
+        
         results = {}
         benchmarks = self.discover_benchmarks()
 
@@ -298,11 +331,17 @@ if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser(description='Python Interpreter Benchmark Suite')
         parser.add_argument('--iterations', type=int, default=5, help='Number of iterations for each benchmark')
-        parser.add_argument('--profile', choices=['basic', 'detailed', 'none'], default='basic', help='Profiling level (basic=timing only, detailed=full profiling, none=no profiling)')
+        parser.add_argument('--profile', choices=['basic', 'detailed', 'none'], default='basic', help='Profiling level')
         parser.add_argument('--benchmarks', nargs='*', help='Specific benchmarks to run (default: all)')
-        parser.add_argument('--report-format', choices=['text', 'json', 'both'], default='text', help='Output format for the results')
+        parser.add_argument('--report-format', choices=['text', 'json', 'both'], default='text', help='Output format')
+        parser.add_argument('--cpu-cores', default='all', help='Number of CPU cores to use (all for max)')
+        parser.add_argument('--thread-limit', type=str, default='1', help='Thread limit per core (0 for unlimited)')
 
         args = parser.parse_args()
+
+        # Set environment variables for CPU and thread limits
+        os.environ['BENCHMARK_CPU_CORES'] = str(args.cpu_cores)
+        os.environ['BENCHMARK_THREAD_LIMIT'] = str(args.thread_limit)
 
         runner = BenchmarkRunner(iterations=args.iterations, profile=(args.profile != 'none'))
 

@@ -13,10 +13,12 @@ import sys
 import threading
 import array
 import ctypes
+import os
 
 def main():
     iterations = 1_000_000
-    num_threads = 4
+    # Use environment variable or default to 4
+    num_threads = int(os.environ.get('BENCHMARK_THREAD_LIMIT', '4'))
     threads = []
     
     # Calculate padding to align with cache lines
@@ -51,4 +53,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

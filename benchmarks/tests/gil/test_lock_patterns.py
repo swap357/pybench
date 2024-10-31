@@ -11,15 +11,16 @@ Purpose:
 import time
 import sys
 import threading
+from benchmarks.utils import get_total_threads
 
 def main():
     iterations = 100_000
-    num_threads = 4
+    total_threads = get_total_threads()
     
     # Test different lock patterns
     patterns = {
         'heavy_contention': threading.Lock(),
-        'per_thread': [threading.Lock() for _ in range(num_threads)],
+        'per_thread': [threading.Lock() for _ in range(total_threads)],
         'try_lock': threading.Lock()
     }
     
@@ -51,35 +52,26 @@ def main():
     
     start = time.time()
     
-    # Test 1: Heavy contention
-    threads = [
-        threading.Thread(target=heavy_contention_worker)
-        for _ in range(num_threads)
-    ]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
-    
-    # Test 2: Per-thread locks
-    threads = [
-        threading.Thread(target=per_thread_worker, args=(i,))
-        for i in range(num_threads)
-    ]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
-    
-    # Test 3: Try-lock pattern
-    threads = [
-        threading.Thread(target=try_lock_worker)
-        for _ in range(num_threads)
-    ]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
+    # Run all lock pattern tests with proper thread count
+    for test_func, args in [
+        (heavy_contention_worker, ()),
+        (per_thread_worker, range(total_threads)),
+        (try_lock_worker, ())
+    ]:
+        threads = []
+        if args:
+            for arg in args:
+                thread = threading.Thread(target=test_func, args=(arg,))
+                threads.append(thread)
+        else:
+            for _ in range(total_threads):
+                thread = threading.Thread(target=test_func)
+                threads.append(thread)
+                
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
     
     duration = time.time() - start
     print(f"Duration: {duration:.4f}")

@@ -11,6 +11,7 @@ Purpose:
 import time
 import sys
 import threading
+from benchmarks.utils import get_total_threads
 
 class TestObject:
     """Test object with no special handling"""
@@ -20,7 +21,7 @@ class TestObject:
 
 def main():
     iterations = 100_000
-    num_threads = 4
+    total_threads = get_total_threads()
     threads = []
     start = time.time()
     
@@ -34,7 +35,7 @@ def main():
                 local_objects.pop(0)  # Force deallocation
     
     # Create and start threads
-    for _ in range(num_threads):
+    for _ in range(total_threads):
         thread = threading.Thread(target=worker)
         threads.append(thread)
         thread.start()

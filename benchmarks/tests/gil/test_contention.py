@@ -11,6 +11,7 @@ Purpose:
 import time
 import sys
 import threading
+from benchmarks.utils import get_total_threads
 
 def cpu_intensive():
     """Pure CPU work to force GIL contention"""
@@ -20,7 +21,7 @@ def cpu_intensive():
     return result
 
 def main():
-    num_threads = 4
+    total_threads = get_total_threads()
     threads = []
     results = []
     start = time.time()
@@ -30,7 +31,7 @@ def main():
         results.append(result)
     
     # Create and start CPU-bound threads
-    for _ in range(num_threads):
+    for _ in range(total_threads):
         thread = threading.Thread(target=worker)
         threads.append(thread)
         thread.start()
@@ -44,4 +45,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())
