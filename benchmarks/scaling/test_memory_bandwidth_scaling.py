@@ -1,5 +1,6 @@
 """
 Thread scaling test for memory-bound operations.
+Measures memory bandwidth scaling across threads.
 """
 import time
 import sys
@@ -48,25 +49,27 @@ def run_threaded_test(num_threads, data, iterations_per_thread):
     return duration, sum(results)
 
 def main():
-    # Test configuration
-    array_size = 100_000
-    base_iterations = 100
-    element_size = 8  # size of double
+    # Test configuration - control variables
+    array_size = 100_000  # Size of data array
+    base_iterations = 100  # Base number of iterations
+    element_size = 8  # Size of double in bytes
     
+    # Test metadata
     metadata = {
         "test_name": "memory_bandwidth_scaling",
+        "test_type": "memory_bound",
+        "description": "Measures memory bandwidth scaling with thread count",
         "timestamp": datetime.now().isoformat(),
         "free_threading": is_free_threading_enabled(),
         "python_version": sys.version,
-        "array_size": array_size,
-        "base_iterations": base_iterations,
-        "element_size_bytes": element_size
-    }
-    
-    results = {
-        "metadata": metadata,
-        "baseline": {},
-        "scaling_tests": []
+        
+        # Control variables
+        "control_vars": {
+            "array_size": array_size,
+            "base_iterations": base_iterations,
+            "element_size_bytes": element_size,
+            "total_array_size_MB": (array_size * element_size) / (1024 * 1024)
+        }
     }
     
     # Create test data
@@ -78,28 +81,53 @@ def main():
     baseline_result = memory_intensive(data, base_iterations)
     baseline_duration = time.time() - start
     
-    results["baseline"] = {
-        "duration": baseline_duration,
-        "bandwidth_MB_s": total_bytes / (baseline_duration * 1024 * 1024),
-        "result": baseline_result
+    baseline_bandwidth = total_bytes / (baseline_duration * 1024 * 1024)
+    
+    results = {
+        "metadata": metadata,
+        "baseline": {
+            "duration": baseline_duration,
+            "bandwidth_MB_s": baseline_bandwidth,
+            "result": baseline_result,
+            "total_bytes": total_bytes
+        },
+        "scaling_tests": []
     }
     
     # Scaling tests
-    for num_threads in [1, 2, 4, 8, 16, 32]:
+    thread_counts = [1, 2, 4, 8, 16, 32]  # Independent variable
+    
+    for num_threads in thread_counts:
         iterations_per_thread = base_iterations // num_threads
         duration, result = run_threaded_test(num_threads, data, iterations_per_thread)
         
+        # Calculate dependent variables
         speedup = baseline_duration / duration
         bandwidth = total_bytes / (duration * 1024 * 1024)
+        bandwidth_per_thread = bandwidth / num_threads
+        efficiency = speedup / num_threads
         
         test_result = {
+            # Independent variables
             "threads": num_threads,
+            "iterations_per_thread": iterations_per_thread,
+            
+            # Primary dependent variables
             "duration": duration,
             "speedup": speedup,
+            
+            # Memory bandwidth metrics
             "bandwidth_MB_s": bandwidth,
-            "iterations_per_thread": iterations_per_thread,
+            "bandwidth_per_thread_MB_s": bandwidth_per_thread,
+            "efficiency": efficiency,
+            
+            # Control/validation variables
             "total_bytes": total_bytes,
-            "result": result
+            "result": result,
+            
+            # Additional metrics
+            "bytes_per_thread": total_bytes / num_threads,
+            "theoretical_max_bandwidth_MB_s": baseline_bandwidth * num_threads
         }
         
         results["scaling_tests"].append(test_result)
@@ -109,4 +137,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

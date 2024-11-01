@@ -45,11 +45,40 @@ class RegularBenchmarkResult:
 
 @dataclass
 class ScalingDataPoint:
+    # Required fields (no defaults)
     thread_count: int
     duration: float
-    throughput: float
-    cpu_usage: float
-    memory_usage: float
+    
+    # Optional fields with defaults
+    speedup: float = 0.0
+    iterations_per_thread: int = 0
+    metrics: Dict[str, Union[float, int, str]] = None
+    
+    def __post_init__(self):
+        if self.metrics is None:
+            self.metrics = {}
+
+    @classmethod
+    def from_test_data(cls, test_data: Dict) -> 'ScalingDataPoint':
+        """Create ScalingDataPoint from test result dictionary."""
+        # Extract required fields
+        point = cls(
+            thread_count=test_data['threads'],
+            duration=test_data['duration']
+        )
+        
+        # Add optional fields if present
+        point.speedup = test_data.get('speedup', 0.0)
+        point.iterations_per_thread = test_data.get('iterations_per_thread', 0)
+        
+        # Add all other fields to metrics
+        excluded_keys = {'threads', 'duration', 'speedup', 'iterations_per_thread'}
+        point.metrics = {
+            k: v for k, v in test_data.items() 
+            if k not in excluded_keys
+        }
+        
+        return point
 
 @dataclass
 class ScalingBenchmarkResult:
@@ -58,9 +87,9 @@ class ScalingBenchmarkResult:
     scaling_factor: float
     max_threads: int
     efficiency: float  # Parallel efficiency (0-1)
+    scaling_data: List[ScalingDataPoint]
     relative_performance: Optional[str] = None
     statistical_data: Optional[StatisticalResult] = None
-    scaling_data: List[ScalingDataPoint] = None
 
 @dataclass
 class BenchmarkSuite:
@@ -82,6 +111,7 @@ class BenchmarkRunner:
 
     def __init__(self, iterations: int = 5, profile: bool = True):
         self.environments = []
+        self._init_package_structure()
         self._init_environments()
         self._init_directories()
         self._init_thread_config()
@@ -91,6 +121,27 @@ class BenchmarkRunner:
         self.profile = profile
         self.system_info = self._collect_system_info()
 
+    def _init_package_structure(self):
+        """Ensure all required __init__.py files exist."""
+        required_dirs = [
+            'benchmarks',
+            'benchmarks/tests',
+            'benchmarks/tests/gil',
+            'benchmarks/tests/memory',
+            'benchmarks/tests/memory/ordering',
+            'benchmarks/tests/memory/ref_counting',
+            'benchmarks/tests/specialization',
+            'benchmarks/tests/bytecode',
+            'benchmarks/tests/baseline'
+        ]
+        
+        for dir_path in required_dirs:
+            os.makedirs(dir_path, exist_ok=True)
+            init_file = os.path.join(dir_path, '__init__.py')
+            if not os.path.exists(init_file):
+                with open(init_file, 'w') as f:
+                    f.write('"""Package initialization."""\n')
+
     def _init_environments(self):
         """Initialize Python environments with GIL configuration."""
         for version, info in self.PYTHON_VERSIONS.items():
@@ -98,6 +149,10 @@ class BenchmarkRunner:
             if env.is_free_threaded:
                 gil_status = "disabled" if version.endswith('t') else "enabled"
                 print(f"Running {version} with GIL {gil_status}")
+            
+            # Set PYTHONPATH to include project root
+            os.environ['PYTHONPATH'] = str(Path(__file__).parent)
+            
             self.environments.append(env)
 
     def _init_directories(self):
@@ -238,14 +293,17 @@ class BenchmarkRunner:
             TimeRemainingColumn(),
             console=self.console
         ) as progress:
-            # Calculate total based on filtered tests
+            # Calculate total tests to run
             total_tests = 0
             if hasattr(self, 'test_filter'):
                 if self.test_filter:
-                    total_tests = len([t for t in discovered_tests["scaling"] 
-                                     if any(f in t for f in self.test_filter)])
+                    # Count matching tests in both regular and scaling
+                    total_tests += len([t for t in discovered_tests["regular"] 
+                                      if any(f in t for f in self.test_filter)])
+                    total_tests += len([t for t in discovered_tests["scaling"] 
+                                      if any(f in t for f in self.test_filter)])
                 else:
-                    total_tests = len(discovered_tests["scaling"])
+                    total_tests = len(discovered_tests["regular"]) + len(discovered_tests["scaling"])
             else:
                 total_tests = len(discovered_tests["regular"]) + len(discovered_tests["scaling"])
                 
@@ -254,7 +312,18 @@ class BenchmarkRunner:
                 total=total_tests * len(self.environments) * self.iterations
             )
 
-            # Run only filtered scaling tests
+            # Run regular tests
+            for test_path in discovered_tests["regular"]:
+                test_name = str(test_path).replace('.py', '')
+                if hasattr(self, 'test_filter') and self.test_filter:
+                    if not any(f in test_path for f in self.test_filter):
+                        continue
+                results["regular"][test_name] = self._run_regular_test(
+                    test_path, progress, overall_task
+                )
+                self.display_results({test_name: results["regular"][test_name]})
+
+            # Run scaling tests
             for test_path in discovered_tests["scaling"]:
                 test_name = str(test_path).replace('.py', '')
                 if hasattr(self, 'test_filter') and self.test_filter:
@@ -403,6 +472,12 @@ class BenchmarkRunner:
             latest_run = scaling_data[-1]
             max_test = latest_run['scaling_tests'][-1]
             
+            # Create scaling data points using the factory method
+            scaling_points = [
+                ScalingDataPoint.from_test_data(test)
+                for test in latest_run['scaling_tests']
+            ]
+
             scaling_result = ScalingBenchmarkResult(
                 status='baseline' if version == self.baseline_version else 'comparison',
                 base_duration=stats.mean,
@@ -410,16 +485,7 @@ class BenchmarkRunner:
                 max_threads=max_test['threads'],
                 efficiency=max_test['speedup'] / max_test['threads'],
                 statistical_data=stats,
-                scaling_data=[
-                    ScalingDataPoint(
-                        thread_count=test['threads'],
-                        duration=test['duration'],
-                        throughput=test.get('ops_per_sec', 0),
-                        cpu_usage=test.get('cpu_usage', 0.0),
-                        memory_usage=test.get('memory_usage', 0.0)
-                    )
-                    for test in latest_run['scaling_tests']
-                ]
+                scaling_data=scaling_points
             )
             
             if version == self.baseline_version:

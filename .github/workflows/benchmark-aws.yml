@@ -7,10 +7,6 @@ on:
         description: 'Build Python versions from source'
         required: false
         default: 'true'
-      profile_level:
-        description: 'Profiling level (basic/detailed/none)'
-        required: false
-        default: 'basic'
       iterations:
         description: 'Number of benchmark iterations'
         required: false
@@ -204,14 +200,12 @@ jobs:
           if [ "$3" = "yes" ]; then
             echo "Running with CPU pinning on cores 0-$((CORES_TO_USE - 1))"
             taskset -c 0-$((CORES_TO_USE - 1)) python benchmark_runner.py \
-              --profile "$4" \
-              --report-format both \
+              --report both \
               --iterations "$5"
           else
             echo "Running without CPU pinning, using $CORES_TO_USE cores"
             python benchmark_runner.py \
-              --profile "$4" \
-              --report-format both \
+              --report both \
               --iterations "$5"
           fi
           EOF

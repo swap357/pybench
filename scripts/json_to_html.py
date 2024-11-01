@@ -81,23 +81,25 @@ def create_benchmark_page(json_file, output_dir, run_id):
     with open(json_file, 'r') as f:
         data = json.load(f)
         
-    # Debug: Print structure
-    print("Data keys:", data.keys())
-    print("\nResults keys:", data['results'].keys())
-    for test_name, test_data in data['results'].items():
-        if test_name != 'versions_info':
-            print(f"\nTest {test_name} keys:", test_data.keys())
-            for version, metrics in test_data.items():
-                print(f"Version {version} keys:", metrics.keys())
-                print(f"Statistical data:", metrics['statistical_data'])
-            break  # Just print first test for brevity
-
     # Get versions info from the results
     versions_info = data['results'].get('versions_info', {})
+    
     # Get actual versions from the first benchmark's results
-    first_benchmark = next((v for k, v in data['results'].items() if k != 'versions_info'), {})
+    # Try regular tests first, then scaling tests
+    first_benchmark = None
+    if data['results'].get('regular_tests'):
+        first_benchmark = next(iter(data['results']['regular_tests'].values()))
+    elif data['results'].get('scaling_tests'):
+        first_benchmark = next(iter(data['results']['scaling_tests'].values()))
+    
+    if not first_benchmark:
+        print("No benchmark results found")
+        return
+        
     actual_versions = list(first_benchmark.keys())
-    sorted_versions = sorted(actual_versions, key=lambda v: (v != versions_info.get('baseline', '3.12.7'), v), reverse=True)  # Fallback if not present
+    sorted_versions = sorted(actual_versions, 
+                           key=lambda v: (v != versions_info.get('baseline', '3.12.7'), v), 
+                           reverse=True)
     baseline_version = versions_info.get('baseline', '3.12.7')
 
     # Extract system information
@@ -166,7 +168,8 @@ def create_benchmark_page(json_file, output_dir, run_id):
             <ul>
                 <li><strong>Run ID:</strong> {run_id}</li>
                 <li><strong>Iterations:</strong> {data['run_config']['iterations']}</li>
-                <li><strong>Profile Level:</strong> {data['run_config']['profile_level']}</li>
+                <li><strong>Thread Config:</strong> {data['run_config']['threads']}</li>
+                <li><strong>Category:</strong> {data['run_config']['category']}</li>
             </ul>
         </div>
 
@@ -182,37 +185,45 @@ def create_benchmark_page(json_file, output_dir, run_id):
             </ul>
         </div>
 
-        <div class="plot-container">
-            <div id="perf_comparison" style="width:100%;height:800px;"></div>
-        </div>
-        <div class="plot-container">
-            <div id="exec_time" style="width:100%;height:800px;"></div>
-        </div>
     """
 
     # Prepare data for the plots
     test_names = []
     version_data = {}
 
-    # Process results correctly
-    results = data['results']
-    for test_name, test_data in results.items():
-        if test_name != 'versions_info':  # Skip the versions_info entry
-            test_names.append(test_name)
-            for version, metrics in test_data.items():
-                if version not in version_data:
-                    version_data[version] = {'medians': [], 'stddevs': [], 'relative_perfs': []}
-                
-                # Access statistical_data correctly
-                stats = metrics.get('statistical_data', {})
-                version_data[version]['medians'].append(stats.get('median', 0))
-                version_data[version]['stddevs'].append(stats.get('stddev', 0))
-                
-                # Handle relative performance
-                relative_perf = 100
-                if metrics.get('relative_performance'):
-                    relative_perf = float(metrics['relative_performance'].strip('%'))
-                version_data[version]['relative_perfs'].append(relative_perf)
+    # Process regular test results
+    regular_tests = data['results'].get('regular_tests', {})
+    for test_name, test_data in regular_tests.items():
+        test_names.append(test_name)
+        for version, metrics in test_data.items():
+            if version not in version_data:
+                version_data[version] = {'medians': [], 'stddevs': [], 'relative_perfs': []}
+            
+            stats = metrics.get('statistical_data', {})
+            version_data[version]['medians'].append(stats.get('median', 0))
+            version_data[version]['stddevs'].append(stats.get('stddev', 0))
+            
+            relative_perf = 100
+            if metrics.get('relative_performance'):
+                relative_perf = float(metrics['relative_performance'].strip('%'))
+            version_data[version]['relative_perfs'].append(relative_perf)
+
+    # Process scaling test results
+    scaling_tests = data['results'].get('scaling_tests', {})
+    for test_name, test_data in scaling_tests.items():
+        test_names.append(test_name)
+        for version, metrics in test_data.items():
+            if version not in version_data:
+                version_data[version] = {'medians': [], 'stddevs': [], 'relative_perfs': []}
+            
+            stats = metrics.get('statistical_data', {})
+            version_data[version]['medians'].append(stats.get('median', 0))
+            version_data[version]['stddevs'].append(stats.get('stddev', 0))
+            
+            relative_perf = 100
+            if metrics.get('relative_performance'):
+                relative_perf = float(metrics['relative_performance'].strip('%'))
+            version_data[version]['relative_perfs'].append(relative_perf)
 
     # Get versions info and generate colors
     versions_info = data['results'].get('versions_info', {})
@@ -294,6 +305,34 @@ def create_benchmark_page(json_file, output_dir, run_id):
         }
     }
 
+    # Add regular plots
+    html_content += """
+        <div class="plot-container">
+            <div id="perf_comparison" style="width:100%;height:800px;"></div>
+        </div>
+        <div class="plot-container">
+            <div id="exec_time" style="width:100%;height:800px;"></div>
+        </div>
+    """
+
+    # Add scaling test plots
+    if scaling_tests:
+        html_content += "<h2>Scaling Test Plots</h2>"
+        for i, (test_name, test_data) in enumerate(scaling_tests.items()):
+            html_content += f"""
+            <div class="plot-container">
+                <div id="scaling_plot_{i}" style="width:100%;height:600px;"></div>
+            </div>
+            """
+            
+            # Add bandwidth plot for memory bandwidth tests
+            if "memory_bandwidth" in test_name:
+                html_content += f"""
+                <div class="plot-container">
+                    <div id="bandwidth_plot_{i}" style="width:100%;height:600px;"></div>
+                </div>
+                """
+
     # Add plot initialization scripts
     html_content += f"""
         <script>
@@ -304,14 +343,35 @@ def create_benchmark_page(json_file, output_dir, run_id):
             const execTimeData = {json.dumps(exec_time_data)};
             const execTimeLayout = {json.dumps(exec_time_layout)};
             Plotly.newPlot('exec_time', execTimeData, execTimeLayout);
-        </script>
     """
+
+    # Add scaling plot initialization
+    for i, (test_name, test_data) in enumerate(scaling_tests.items()):
+        plot_data, layout = create_scaling_plots(test_name, test_data, versions_info, colors)
+        html_content += f"""
+            const scalingData_{i} = {json.dumps(plot_data)};
+            const scalingLayout_{i} = {json.dumps(layout)};
+            Plotly.newPlot('scaling_plot_{i}', scalingData_{i}, scalingLayout_{i});
+        """
+        
+        # Add bandwidth plot initialization for memory bandwidth tests
+        if "memory_bandwidth" in test_name:
+            bw_data, bw_layout = create_bandwidth_plot(test_name, test_data, versions_info, colors)
+            html_content += f"""
+                const bandwidthData_{i} = {json.dumps(bw_data)};
+                const bandwidthLayout_{i} = {json.dumps(bw_layout)};
+                Plotly.newPlot('bandwidth_plot_{i}', bandwidthData_{i}, bandwidthLayout_{i});
+            """
+
+    html_content += "</script>"
 
     # Add detailed statistics table
     html_content += "<h2>Statistics</h2><table>"
 
-    for test_name, test_data in results.items():
-        if test_name != 'versions_info':  # Skip the versions_info entry
+    # Add regular test statistics
+    if regular_tests:
+        html_content += "<h2>Regular Test Statistics</h2><table>"
+        for test_name, test_data in regular_tests.items():
             html_content += f"""
             <tr class="header">
                 <td colspan="7">{test_name}</td>
@@ -326,28 +386,157 @@ def create_benchmark_page(json_file, output_dir, run_id):
                 <th>Execution Time Increase</th>
             </tr>
             """
-            for version, metrics in test_data.items():
-                stats = metrics['statistical_data']
-                row_class = "baseline" if metrics.get('relative_performance') is None else ""
-                relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
-                html_content += f"""
-                <tr class="{row_class}">
-                    <td>{version}</td>
-                    <td>{stats['median']:.4f}</td>
-                    <td>{stats['stddev']:.4f}</td>
-                    <td>{stats['mean']:.4f}</td>
-                    <td>{stats['min']:.4f}</td>
-                    <td>{stats['max']:.4f}</td>
-                    <td>{relative_perf:.2f}%</td>
-                </tr>
-                """
+            html_content += _add_test_statistics(html_content, test_data)
+        html_content += "</table>"
 
-    html_content += "</table></body></html>"
+    # Add scaling test statistics
+    if scaling_tests:
+        html_content += "<h2>Scaling Test Statistics</h2><table>"
+        for test_name, test_data in scaling_tests.items():
+            html_content += f"""
+            <tr class="header">
+                <td colspan="6">{test_name}</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            """
+            html_content += _add_scaling_test_statistics(html_content, test_data)
+        html_content += "</table>"
+
+    html_content += "</body></html>"
 
     # Write the file
     output_file = os.path.join(output_dir, "results.html")
     with open(output_file, 'w') as f:
         f.write(html_content)
+
+def _add_test_statistics(html_content: str, test_data: dict) -> str:
+    """Helper function to add test statistics rows"""
+    table_rows = ""
+    for version, metrics in test_data.items():
+        stats = metrics['statistical_data']
+        row_class = "baseline" if metrics.get('relative_performance') is None else ""
+        relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
+        table_rows += f"""
+        <tr class="{row_class}">
+            <td>{version}</td>
+            <td>{stats['median']:.4f}</td>
+            <td>{stats['stddev']:.4f}</td>
+            <td>{stats['mean']:.4f}</td>
+            <td>{stats['min']:.4f}</td>
+            <td>{stats['max']:.4f}</td>
+            <td>{relative_perf:.2f}%</td>
+        </tr>
+        """
+    return table_rows
+
+def _add_scaling_test_statistics(html_content: str, test_data: dict) -> str:
+    """Helper function to add scaling test statistics rows"""
+    table_rows = ""
+    for version, metrics in test_data.items():
+        stats = metrics['statistical_data']
+        row_class = "baseline" if metrics.get('relative_performance') is None else ""
+        relative_perf = 100 if metrics.get('relative_performance') is None else float(metrics['relative_performance'].strip('%'))
+        table_rows += f"""
+        <tr class="{row_class}">
+            <td>{version}</td>
+            <td>{stats['median']:.4f}</td>
+            <td>{metrics['scaling_factor']:.2f}x</td>
+            <td>{metrics['efficiency']:.2%}</td>
+            <td>{metrics['max_threads']}</td>
+            <td>{relative_perf:.2f}%</td>
+        </tr>
+        """
+    return table_rows
+
+def create_scaling_plots(test_name: str, test_data: dict, versions_info: dict, colors: dict) -> tuple:
+    """Create scaling plots for a specific test."""
+    # Get all available metrics from first test's data
+    first_version = next(iter(test_data.values()))
+    first_scaling_point = first_version['scaling_data'][0]  # Direct access to scaling point
+    
+    # Get all metrics excluding standard fields
+    standard_fields = {'thread_count', 'duration', 'speedup', 'iterations_per_thread'}
+    
+    # Get metrics from the 'metrics' dictionary
+    metrics = ['speedup'] + list(first_scaling_point['metrics'].keys())
+    
+    # Create traces for each version and metric
+    plot_data = []
+    for version in test_data.keys():
+        # Get the scaling data points directly
+        scaling_points = test_data[version]['scaling_data']
+        x = [point['thread_count'] for point in scaling_points]
+        
+        # Create trace for speedup
+        y = [point['speedup'] for point in scaling_points]
+        plot_data.append({
+            'type': 'scatter',
+            'name': f"{version}",
+            'x': x,
+            'y': y,
+            'line': {'color': colors.get(version, '#757575')}
+        })
+
+    layout = {
+        'title': f'{test_name} - Speedup vs Thread Count',
+        'xaxis': {'title': 'Thread Count'},
+        'yaxis': {'title': 'Speedup'},
+        'showlegend': True,
+        'height': 600
+    }
+
+    return plot_data, layout
+
+def create_bandwidth_plot(test_name: str, test_data: dict, versions_info: dict, colors: dict) -> tuple:
+    """Create bandwidth plot for memory bandwidth tests."""
+    plot_data = []
+    
+    # Get unique thread counts across all versions
+    thread_counts = sorted(set(
+        point['thread_count'] 
+        for version_data in test_data.values() 
+        for point in version_data['scaling_data']
+    ))
+    
+    for version in test_data.keys():
+        # Get the scaling data points directly
+        scaling_points = test_data[version]['scaling_data']
+        x = [point['thread_count'] for point in scaling_points]
+        
+        # Get bandwidth data
+        y = [point['metrics']['bandwidth_MB_s'] for point in scaling_points]
+        
+        plot_data.append({
+            'type': 'scatter',
+            'name': f"{version}",
+            'x': x,
+            'y': y,
+            'line': {'color': colors.get(version, '#757575')}
+        })
+
+    layout = {
+        'title': f'{test_name} - Memory Bandwidth vs Thread Count',
+        'xaxis': {
+            'title': 'Thread Count',
+            'type': 'log',
+            'tickmode': 'array',
+            'tickvals': thread_counts,
+            'ticktext': [str(t) for t in thread_counts]
+        },
+        'yaxis': {'title': 'Bandwidth (MB/s)'},
+        'showlegend': True,
+        'height': 600,
+        'grid': {'pattern': 'independent'}
+    }
+
+    return plot_data, layout
 
 def json_to_html(json_file, output_dir='runs', run_id=None):
     """Process benchmark results and create a single run page"""

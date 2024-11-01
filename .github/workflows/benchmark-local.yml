@@ -7,10 +7,6 @@ on:
         description: 'Build Python from source'
         required: false
         default: 'true'
-      profile_level:
-        description: 'Profiling level (basic/detailed/none)'
-        required: false
-        default: 'basic'
       iterations:
         description: 'Number of benchmark iterations'
         required: false
@@ -147,7 +143,7 @@ jobs:
         export NUMEXPR_NUM_THREADS=6
         
         # Run with taskset
-        taskset -c 2-7 python benchmark_runner.py --profile ${{ github.event.inputs.profile_level }} --report-format both
+        taskset -c 2-7 python benchmark_runner.py --report both
         ls -l
 
     - name: Install script dependencies
