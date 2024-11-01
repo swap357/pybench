@@ -853,8 +853,7 @@ Categories:
 
         # Save results if needed
         if args.report in ('json', 'both'):
-            output_file = (f"benchmark_results_{args.category}_"
-                         f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+            output_file = (f"benchmark_results.json")
             with open(output_file, 'w') as f:
                 json.dump({
                     'results': results,
