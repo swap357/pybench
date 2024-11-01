@@ -5,6 +5,7 @@ import platform
 from pathlib import Path
 import time
 import os
+import tempfile
 
 class PythonEnvironment:
     def __init__(self, version: str, path: str = None):
@@ -12,6 +13,7 @@ class PythonEnvironment:
         self.path = path or self._get_python_path(version)
         self._validate_interpreter()
         self.is_free_threaded = self._check_free_threading()
+        self._ensure_dependencies()
 
     def _get_python_path(self, version: str) -> str:
         """Get the Python interpreter path using pyenv."""
@@ -75,54 +77,74 @@ print(f"{gil_disabled}")
         except Exception:
             return False
 
-    def run_benchmark(self, script_path: str, args: List[str] = None) -> Dict:
-        """Run a benchmark script with this Python interpreter."""
-        cmd = [self.path]
-        
-        # For free-threaded builds, disable GIL
-        if self.is_free_threaded:
-            if self.version.endswith('t'):
-                # Disable GIL using command line option
-                cmd.extend(['-X', 'nogil'])
-        
-        # Add script and any additional args
-        cmd.append(script_path)
-        if args:
-            cmd.extend(args)
+    def _ensure_dependencies(self):
+        """Install required dependencies if missing."""
+        dependencies = {
+            'numpy': ['np_column_compute']
+        }
 
+        for package, test_patterns in dependencies.items():
+            # Only check if any relevant tests are present
+            if any(pattern in test for pattern in test_patterns 
+                  for test in os.listdir('benchmarks/scaling')):
+                try:
+                    # Try importing the package
+                    subprocess.run(
+                        [self.path, '-c', f'import {package}'],
+                        capture_output=True,
+                        check=True
+                    )
+                except subprocess.CalledProcessError:
+                    # Install if import fails
+                    print(f"Installing {package} for Python {self.version}")
+                    subprocess.run(
+                        [self.path, '-m', 'pip', 'install', package],
+                        check=True
+                    )
+
+    def run_benchmark(self, benchmark_path: str) -> Dict:
+        """Run a benchmark and return results."""
         try:
-            # Set environment variables
-            env = os.environ.copy()
-            if self.is_free_threaded:
-                if self.version.endswith('t'):
-                    env['PYTHON_GIL'] = '0'  # Disable GIL
-                else:
-                    env['PYTHON_GIL'] = '1'  # Enable GIL
-            
-            start_time = time.time()
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                env=env
-            )
-            end_time = time.time()
-            
+            # Create a temporary file for output capture
+            with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_out:
+                start_time = time.time()
+                
+                # Run the benchmark with output redirection
+                process = subprocess.Popen(
+                    [self.path, benchmark_path],
+                    stdout=temp_out,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=os.environ.copy()
+                )
+                
+                _, stderr = process.communicate()
+                duration = time.time() - start_time
+                
+                # Read the captured output
+                temp_out.seek(0)
+                output = temp_out.read()
+                
+                if process.returncode != 0:
+                    return {
+                        'success': False,
+                        'error': stderr.strip() or 'Process failed',
+                        'duration': duration,
+                        'output': output
+                    }
+                
+                return {
+                    'success': True,
+                    'duration': duration,
+                    'output': output
+                }
+                
+        except Exception as e:
             return {
-                'output': result.stdout,
-                'duration': end_time - start_time,
-                'version': self.version,
-                'success': True,
-                'free_threaded': self.is_free_threaded
-            }
-        except subprocess.CalledProcessError as e:
-            return {
-                'output': e.stderr,
-                'duration': None,
-                'version': self.version,
                 'success': False,
-                'free_threaded': self.is_free_threaded
+                'error': str(e),
+                'duration': 0,
+                'output': ''
             }
 
     def _validate_interpreter(self):
