@@ -80,13 +80,22 @@ print(f"{gil_disabled}")
     def _ensure_dependencies(self):
         """Install required dependencies if missing."""
         dependencies = {
-            'numpy': ['np_column_compute']
+            'numpy': ['np_column_compute'],
+            'psutil': ['test_contention', 'test_lock_patterns']
         }
 
         for package, test_patterns in dependencies.items():
-            # Only check if any relevant tests are present
-            if any(pattern in test for pattern in test_patterns 
-                  for test in os.listdir('benchmarks/scaling')):
+            # Check if any relevant tests are present in both scaling and regular tests
+            has_matching_test = any(
+                pattern in test 
+                for pattern in test_patterns 
+                for test in (
+                    os.listdir('benchmarks/scaling') + 
+                    os.listdir('benchmarks/tests/gil')
+                )
+            )
+            
+            if has_matching_test:
                 try:
                     # Try importing the package
                     subprocess.run(
