@@ -126,7 +126,7 @@ class BenchmarkRunner:
         required_dirs = [
             'benchmarks',
             'benchmarks/tests',
-            'benchmarks/tests/gil',
+            #'benchmarks/tests/gil',
             'benchmarks/tests/memory',
             'benchmarks/tests/memory/ordering',
             'benchmarks/tests/memory/ref_counting',
