@@ -147,9 +147,18 @@ jobs:
 
       - name: Run benchmarks
         run: |
+          # Configure SSH for better stability
+          mkdir -p ~/.ssh
+          cat >> ~/.ssh/config << 'EOF'
+          Host *
+            ServerAliveInterval 60
+            ServerAliveCountMax 10
+            TCPKeepAlive yes
+          EOF
+          
           # Wait for SSH to be available
           for i in {1..5}; do
-            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} echo "SSH connection successful"; then
+            if ssh -o StrictHostKeyChecking=no -i benchmark_key.pem ubuntu@${{ steps.launch-instance.outputs.public_ip }} echo "SSH connection successful"; then
               break
             fi
             echo "Waiting for SSH to be available (attempt $i)..."
