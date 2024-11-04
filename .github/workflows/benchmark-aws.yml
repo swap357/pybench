@@ -233,6 +233,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Clean up files that might interfere with git checkout
+          rm -f benchmark_key.pem run_benchmark.sh
+          
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
@@ -247,6 +250,8 @@ jobs:
             --output-dir "/tmp/benchmark_results/runs/${TIMESTAMP}" \
             --run-id "${TIMESTAMP}"
           
+          # Clean working directory before git operations
+          git clean -fd
           git fetch origin gh-pages
           
           if git ls-remote --heads origin gh-pages | grep gh-pages > /dev/null; then
