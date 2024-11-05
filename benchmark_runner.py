@@ -99,13 +99,27 @@ class BenchmarkSuite:
     versions_info: Dict[str, any]
 
 class BenchmarkRunner:
-    # Define interpreter versions here as a class variable
+    # Test discovery configuration
+    BENCHMARK_CATEGORIES = [
+        'baseline',
+        'memory/ordering',
+        'memory/ref_counting',
+        'specialization',
+        'bytecode',
+        'gil'
+    ]
+    
+    # Tests to explicitly exclude
+    EXCLUDED_TESTS = [
+        'gil/test_lock_patterns.py',
+        'memory/ref_counting/test_cross_thread.py'
+    ]
+
+    # Python versions configuration
     PYTHON_VERSIONS = {
         "3.12.7": {"type": "baseline"},  # Marking baseline version
         "3.13.0": {"type": "release"},
         "3.13.0t": {"type": "experimental"},
-        # "3.14.0a1": {"type": "experimental"},
-        # "3.14.0a1t": {"type": "experimental"},
     }
     BASELINE_VERSION = "3.12.7"
 
@@ -125,15 +139,11 @@ class BenchmarkRunner:
         """Ensure all required __init__.py files exist."""
         required_dirs = [
             'benchmarks',
-            'benchmarks/tests',
-            #'benchmarks/tests/gil',  # Comment out GIL tests
-            'benchmarks/tests/memory',
-            'benchmarks/tests/memory/ordering',
-            'benchmarks/tests/memory/ref_counting',
-            'benchmarks/tests/specialization',
-            'benchmarks/tests/bytecode',
-            'benchmarks/tests/baseline'
+            'benchmarks/tests'
         ]
+        # Add category directories from BENCHMARK_CATEGORIES
+        for category in self.BENCHMARK_CATEGORIES:
+            required_dirs.append(f'benchmarks/tests/{category}')
         
         for dir_path in required_dirs:
             os.makedirs(dir_path, exist_ok=True)
@@ -230,28 +240,21 @@ class BenchmarkRunner:
     def _discover_regular_tests(self) -> List[str]:
         """Discover regular benchmark tests."""
         tests = []
-        categories = [
-            "baseline/",
-            "memory/ordering/",
-            "memory/ref_counting/",
-            "specialization/",
-            "bytecode/"
-        ]
-
+        
         # Discover categorized tests
-        for category in categories:
+        for category in self.BENCHMARK_CATEGORIES:
             category_dir = self.test_dir / category
             if category_dir.exists():
-                tests.extend(
-                    str(file.relative_to(self.test_dir))
-                    for file in category_dir.glob("test_*.py")
-                )
+                for file in category_dir.glob("test_*.py"):
+                    rel_path = str(file.relative_to(self.test_dir))
+                    if rel_path not in self.EXCLUDED_TESTS:
+                        tests.append(rel_path)
 
         # Discover tests in root test directory
-        tests.extend(
-            str(file.relative_to(self.test_dir))
-            for file in self.test_dir.glob("test_*.py")
-        )
+        for file in self.test_dir.glob("test_*.py"):
+            rel_path = str(file.relative_to(self.test_dir))
+            if rel_path not in self.EXCLUDED_TESTS:
+                tests.append(rel_path)
 
         return tests
 
