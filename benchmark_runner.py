@@ -126,7 +126,7 @@ class BenchmarkRunner:
         required_dirs = [
             'benchmarks',
             'benchmarks/tests',
-            #'benchmarks/tests/gil',
+            #'benchmarks/tests/gil',  # Comment out GIL tests
             'benchmarks/tests/memory',
             'benchmarks/tests/memory/ordering',
             'benchmarks/tests/memory/ref_counting',
@@ -231,8 +231,11 @@ class BenchmarkRunner:
         """Discover regular benchmark tests."""
         tests = []
         categories = [
-            "baseline/", "gil/", "memory/ordering/",
-            "memory/ref_counting/", "specialization/", "bytecode/"
+            "baseline/",
+            "memory/ordering/",
+            "memory/ref_counting/",
+            "specialization/",
+            "bytecode/"
         ]
 
         # Discover categorized tests
