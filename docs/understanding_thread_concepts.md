@@ -2,19 +2,6 @@
 
 ## Introduction
 
-### Types of Specialization in Python
-1. **Type Specialization**
-   - Bytecode specialized for specific types
-   - Example: Integer addition vs generic addition
-   
-2. **Attribute Specialization**
-   - Cached attribute lookups
-   - Optimized method calls
-
-3. **Guard-based Specialization**
-   - Runtime checks for optimization validity
-   - Fallback paths for despecialization
-
 ## 1. Thread Affinity and Biased Reference Counting
 
 ### Concept
