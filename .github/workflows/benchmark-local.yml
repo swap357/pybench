@@ -11,7 +11,20 @@ on:
         description: 'Number of benchmark iterations'
         required: false
         default: '5'
+      cpu_pinning:
+        description: 'Enable CPU pinning (yes/no)'
+        required: false
+        default: 'no'
+      cpu_cores:
+        description: 'Number of CPU cores to use (all for max)'
+        required: false
+        default: 'all'
+      thread_limit:
+        description: 'Thread limit per core (0 for unlimited)'
+        required: false
+        default: '1'
 
+# Restrict permissions
 permissions:
   contents: write
   pages: write
@@ -19,7 +32,9 @@ permissions:
 
 jobs:
   benchmark:
-    runs-on: [self-hosted, desk357]  # Specify your self-hosted runner labels
+    # Add user restriction
+    if: github.actor == 'swap357'  # Replace with your GitHub username
+    runs-on: [self-hosted, desk357]
 
     steps:
     - uses: actions/checkout@v4

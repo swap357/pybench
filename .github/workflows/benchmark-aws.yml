@@ -1,10 +1,12 @@
 name: Benchmark-AWS
 
+# Only allow manual triggers and restrict to specific users
 on:
   workflow_dispatch:
+    # Add input controls for the workflow
     inputs:
       build_from_source:
-        description: 'Build Python versions from source'
+        description: 'Build Python from source'
         required: false
         default: 'true'
       iterations:
@@ -28,14 +30,20 @@ on:
         required: false
         default: '1'
 
+# Restrict permissions
 permissions:
   contents: write
   pages: write
   id-token: write
 
+# Add environment restriction
+environment:
+  name: benchmark-environment
+
 jobs:
-  run-benchmark:
-    name: Run AWS Benchmarks
+  benchmark:
+    # Restrict to specific users/teams
+    if: github.actor == 'swap357'  # Replace with your GitHub username
     runs-on: ubuntu-latest
     
     steps:
