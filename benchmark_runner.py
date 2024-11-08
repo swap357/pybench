@@ -111,8 +111,6 @@ class BenchmarkRunner:
     
     # Tests to explicitly exclude
     EXCLUDED_TESTS = [
-        'gil/test_lock_patterns.py',
-        'memory/ref_counting/test_cross_thread.py'
     ]
 
     # Python versions configuration
