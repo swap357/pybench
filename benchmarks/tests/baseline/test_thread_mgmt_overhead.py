@@ -14,14 +14,13 @@ import threading
 
 def no_op_worker():
     """Thread worker that does minimal work"""
-    time.sleep(0.001)  # Tiny sleep to ensure thread actually runs
+    time.sleep(0.001)
 
 def main():
-    num_threads = 1000  # Create enough threads to measure overhead
+    num_threads = 1000 
     threads = []
     start = time.time()
     
-    # Create and start threads
     for _ in range(num_threads):
         thread = threading.Thread(target=no_op_worker)
         threads.append(thread)
