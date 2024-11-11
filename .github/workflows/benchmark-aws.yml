@@ -36,13 +36,9 @@ permissions:
   pages: write
   id-token: write
 
-# Add environment restriction
-environment:
-  name: benchmark-environment
-
 jobs:
   benchmark:
-    # Restrict to specific users/teams
+    # Add user restriction
     if: github.actor == 'swap357'  # Replace with your GitHub username
     runs-on: ubuntu-latest
     
