@@ -107,7 +107,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
     cpu_count = system_info['cpu_count']
     memory_total = system_info['memory_total']
     os_info = system_info['os_info']
-    cpu_freq = system_info['cpu_freq']
+    cpu_freq = system_info.get('cpu_freq', {})
     load_avg = system_info['load_avg']
 
     html_content = f"""
@@ -180,7 +180,7 @@ def create_benchmark_page(json_file, output_dir, run_id):
                 <li><strong>CPU Affinity:</strong> {system_info.get('cpu_affinity', 'Not restricted')}</li>
                 <li><strong>Total Memory:</strong> {memory_total / (1024**3):.2f} GB</li>
                 <li><strong>OS:</strong> {os_info}</li>
-                <li><strong>CPU Frequency:</strong> {cpu_freq['current']:.2f} MHz</li>
+                <li><strong>CPU Frequency:</strong> {cpu_freq.get('current', 'Not available')} MHz</li>
                 <li><strong>Load Average:</strong> [{', '.join(f'{x:.2f}' for x in load_avg)}]</li>
             </ul>
         </div>
