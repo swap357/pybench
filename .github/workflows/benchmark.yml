@@ -20,7 +20,16 @@ permissions:
 
 jobs:
   benchmark:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        arch: [X64, ARM64]
+        exclude:
+          # Exclude ARM64 on non-ARM runners
+          - os: ubuntu-latest
+            arch: ARM64
+          # Add more exclusions as needed
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -31,18 +40,23 @@ jobs:
       with:
         path: |
           ~/.pyenv
-        key: ${{ runner.os }}-pyenv-${{ hashFiles('pyproject.toml') }}
+        key: ${{ runner.os }}-${{ matrix.arch }}-pyenv-${{ hashFiles('pyproject.toml') }}
 
     - name: Install pyenv dependencies
       run: |
         sudo apt-get update
+        # Include ARM-specific packages when needed
         sudo apt-get install -y \
           libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
-          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+          libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+          gcc make build-essential
 
     - name: Install and configure pyenv
       run: |
-        # Install pyenv if not cached
+        # Detect architecture
+        ARCH=$(uname -m)
+        echo "Running on architecture: $ARCH"
+        
         if [ ! -d "$HOME/.pyenv" ]; then
           echo "Installing pyenv..."
           curl https://pyenv.run | bash
@@ -97,6 +111,10 @@ jobs:
         export PYENV_ROOT="$HOME/.pyenv"
         export PATH="$PYENV_ROOT/bin:$PATH"
         eval "$(pyenv init -)"
+        
+        # Detect architecture
+        ARCH=$(uname -m)
+        echo "Building Python for architecture: $ARCH"
 
         # Get Python versions from the runner
         VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.join(BenchmarkRunner.PYTHON_VERSIONS.keys()))")
@@ -107,8 +125,13 @@ jobs:
         if [ "${{ github.event.inputs.build_from_source }}" == "true" ]; then
           for version in $VERSIONS; do
             if ! pyenv versions | grep "$version" > /dev/null; then
-              echo "Installing Python $version from source..."
-              pyenv install -s $version --force
+              echo "Installing Python $version from source for $ARCH..."
+              # Add architecture-specific optimizations
+              if [ "$ARCH" = "aarch64" ]; then
+                PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install -s $version --force
+              else
+                PYTHON_CONFIGURE_OPTS="--enable-optimizations" pyenv install -s $version --force
+              fi
             else
               echo "Python $version already installed (from cache)"
             fi
@@ -116,7 +139,7 @@ jobs:
         else
           for version in $VERSIONS; do
             if ! pyenv versions | grep "$version" > /dev/null; then
-              echo "Installing Python $version..."
+              echo "Installing Python $version for $ARCH..."
               pyenv install $version || pyenv install $version --patch < <(curl -sSL https://raw.githubusercontent.com/python/cpython/${version}/Misc/NEWS.d/${version}.rst)
             else
               echo "Python $version already installed (from cache)"
@@ -124,10 +147,8 @@ jobs:
           done
         fi
 
-        # Rehash after installations
         pyenv rehash
         
-        # Set global Python to baseline version
         BASELINE=$(python -c "from benchmark_runner import BenchmarkRunner; print(BenchmarkRunner.BASELINE_VERSION)")
         pyenv global $BASELINE
         python --version
