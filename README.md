@@ -15,14 +15,14 @@ analysis of performance characteristics in Python's experimental free-threading 
 
 ### 1. Baseline Tests
 Establish baseline performance metrics:
-- [cpu-intensive performance](benchmarks/tests/baseline/test_cpu_baseline.py)
-- [mem-io performance](benchmarks/tests/baseline/test_memory_baseline.py)
-- [thread creation](benchmarks/tests/baseline/test_thread_baseline.py)
+- [cpu-intensive performance](benchmarks/tests/baseline/test_cpu_ops_analysis.md)
+- [mem-io performance](benchmarks/tests/baseline/test_memory_ops_analysis.md)
+- [thread creation](benchmarks/tests/baseline/test_thread_mgmt_analysis.md)
 
 ### 2. Core Interpreter Tests
 
 #### Bytecode Behavior
-- [dispatch overhead](benchmarks/tests/bytecode/test_bytecode_dispatch.py)
+- [dispatch overhead](benchmarks/tests/bytecode/bytecode_dispatch_analysis.md)
 
 #### GIL Impact
 - [thread contention](benchmarks/tests/gil/test_contention.py)
@@ -30,19 +30,19 @@ Establish baseline performance metrics:
 
 #### Memory Management
 Memory Ordering:
-- [sequential access](benchmarks/tests/memory/ordering/test_sequential_access.py)
-- [strided access](benchmarks/tests/memory/ordering/test_strided_access.py)
-- [memory alignment](benchmarks/tests/memory/ordering/test_alignment.py)
-- [false sharing (baseline)](benchmarks/tests/memory/ordering/test_false_sharing_baseline.py)
-- [false sharing (padded)](benchmarks/tests/memory/ordering/test_false_sharing_padded.py)
+- [sequential access](benchmarks/tests/memory/ordering/test_memory_access_patterns_analysis.md)
+- [strided access](benchmarks/tests/memory/ordering/test_memory_access_patterns_analysis.md)
+- [memory alignment](benchmarks/tests/memory/ordering/test_memory_access_patterns_analysis.md)
+- [false sharing (baseline)](benchmarks/tests/memory/ordering/test_false_sharing_analysis.md)
+- [false sharing (padded)](benchmarks/tests/memory/ordering/test_false_sharing_analysis.md)
 
 Reference Counting:
-- [thread-local objects](benchmarks/tests/memory/ref_counting/test_thread_local.py)
-- [cross-thread objects](benchmarks/tests/memory/ref_counting/test_cross_thread.py)
+- [thread-local objects](benchmarks/tests/memory/ref_counting/ref_counting_patterns_analysis.md)
+- [cross-thread objects](benchmarks/tests/memory/ref_counting/ref_counting_patterns_analysis.md)
 
 #### Specialization
 - [dynamic operations](benchmarks/tests/specialization/test_dynamic_operations.py)
-- [typed operations](benchmarks/tests/specialization/test_typed_operations.py)
+- [typed operations](benchmarks/tests/specialization/test_dynamic_operations.py)
 
 ## Benchmark Setup - Github Actions
 
