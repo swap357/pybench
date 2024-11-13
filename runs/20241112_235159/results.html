@@ -1,0 +1,1074 @@
+
+    <html>
+    <head>
+        <title>Benchmark results: 20241112_235159</title>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; max-width: 1400px; margin: 0 auto; }
+            h1, h2 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+            tr.header { background-color: #f8f9fa; font-weight: bold; }
+            tr.baseline { background-color: #f8f9fa; }
+            .system-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .system-info li { margin-bottom: 5px; }
+            .plot-container { margin: 30px 0; }
+            .timestamp { color: #666; font-size: 0.9em; margin-top: 10px; }
+            .breadcrumb { 
+                padding: 10px 0;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .breadcrumb a { 
+                color: #0366d6;
+                text-decoration: none;
+            }
+            .breadcrumb a:hover { 
+                text-decoration: underline;
+            }
+            .breadcrumb span { 
+                color: #666;
+                margin: 0 5px;
+            }
+            .info-section {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            .info-section h2 {
+                margin-top: 0;
+            }
+            .info-section li {
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="breadcrumb">
+            <a href="../../index.html">← Back to index</a>
+        </div>
+        <h1>Benchmark Results</h1>
+        
+        <div class="info-section">
+            <h2>Run Configuration</h2>
+            <ul>
+                <li><strong>Run ID:</strong> 20241112_235159</li>
+                <li><strong>Iterations:</strong> 5</li>
+                <li><strong>Thread Config:</strong> auto</li>
+                <li><strong>Category:</strong> all</li>
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h2>System Information</h2>
+            <ul>
+                <li><strong>CPU Count:</strong> 8</li>
+                <li><strong>CPU Affinity:</strong> cores 0-7</li>
+                <li><strong>Total Memory:</strong> 123.55 GB</li>
+                <li><strong>OS:</strong> Linux 6.8.0-1016-aws</li>
+                <li><strong>CPU Frequency:</strong> Not available MHz</li>
+                <li><strong>Load Average:</strong> [0.15, 0.03, 0.01]</li>
+            </ul>
+        </div>
+
+    
+        <div class="plot-container">
+            <div id="perf_comparison" style="width:100%;height:800px;"></div>
+        </div>
+        <div class="plot-container">
+            <div id="exec_time" style="width:100%;height:800px;"></div>
+        </div>
+    <h2>Scaling Test Plots</h2>
+            <div class="plot-container">
+                <div id="scaling_plot_0" style="width:100%;height:600px;"></div>
+            </div>
+            
+            <div class="plot-container">
+                <div id="scaling_plot_1" style="width:100%;height:600px;"></div>
+            </div>
+            
+            <div class="plot-container">
+                <div id="scaling_plot_2" style="width:100%;height:600px;"></div>
+            </div>
+            
+            <div class="plot-container">
+                <div id="scaling_plot_3" style="width:100%;height:600px;"></div>
+            </div>
+            
+            <div class="plot-container">
+                <div id="scaling_plot_4" style="width:100%;height:600px;"></div>
+            </div>
+            
+                <div class="plot-container">
+                    <div id="bandwidth_plot_4" style="width:100%;height:600px;"></div>
+                </div>
+                
+            <div class="plot-container">
+                <div id="scaling_plot_5" style="width:100%;height:600px;"></div>
+            </div>
+            
+            <div class="plot-container">
+                <div id="scaling_plot_6" style="width:100%;height:600px;"></div>
+            </div>
+            
+        <script>
+            const perfComparisonData = [{"type": "bar", "name": "3.13.0t", "x": [109.65, 122.79, 207.61, 305.67, 150.88, 118.88, 185.84, 151.62, 342.97, 22.81, 71.99, 74.03, 78.56, 449.46, 26.08, 349.36, 737.71, 41.28, 570.22, 665.53, 93.12, 76.14], "y": ["baseline/test_memory_ops_overhead", "baseline/test_thread_mgmt_overhead", "baseline/test_cpu_ops", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_strided_access", "memory/ordering/test_alignment", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch", "gil/test_lock_patterns", "gil/test_contention", "test_np_column_compute_thread", "test_ref_counting_local_scaling", "test_ref_counting_shared_scaling", "test_parallel_compute_scaling", "test_memory_bandwidth_scaling", "test_lock_contention_scaling", "test_np_column_compute_mp"], "orientation": "h", "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [85.25, 99.64, 93.67, 102.42, 135.48, 106.22, 100.77, 137.13, 85.93, 93.68, 52.09, 53.77, 55.93, 112.76, 110.01, 106.65, 100.55, 96.32, 96.08, 99.77, 92.68, 107.69], "y": ["baseline/test_memory_ops_overhead", "baseline/test_thread_mgmt_overhead", "baseline/test_cpu_ops", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_strided_access", "memory/ordering/test_alignment", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch", "gil/test_lock_patterns", "gil/test_contention", "test_np_column_compute_thread", "test_ref_counting_local_scaling", "test_ref_counting_shared_scaling", "test_parallel_compute_scaling", "test_memory_bandwidth_scaling", "test_lock_contention_scaling", "test_np_column_compute_mp"], "orientation": "h", "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100], "y": ["baseline/test_memory_ops_overhead", "baseline/test_thread_mgmt_overhead", "baseline/test_cpu_ops", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_strided_access", "memory/ordering/test_alignment", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch", "gil/test_lock_patterns", "gil/test_contention", "test_np_column_compute_thread", "test_ref_counting_local_scaling", "test_ref_counting_shared_scaling", "test_parallel_compute_scaling", "test_memory_bandwidth_scaling", "test_lock_contention_scaling", "test_np_column_compute_mp"], "orientation": "h", "marker": {"color": "#757575"}}];
+            const perfComparisonLayout = {"title": "Execution Time Comparison Across Tests", "xaxis": {"title": "Execution Time Increase (%)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('perf_comparison', perfComparisonData, perfComparisonLayout);
+
+            const execTimeData = [{"type": "bar", "name": "3.13.0t", "x": [0.04451704025268555, 0.08482623100280762, 0.2588670253753662, 1.817857027053833, 1.1640939712524414, 6.45933198928833, 0.5613353252410889, 8.634549140930176, 5.724480390548706, 0.2505481243133545, 0.6981494426727295, 0.6988427639007568, 0.6993393898010254, 5.016686916351318, 0.09679412841796875, 0.056046485900878906, 0.4013843536376953, 0.49988603591918945, 0.05537009239196777, 0.2722773551940918, 0.05550217628479004, 0.05723094940185547], "y": ["baseline/test_memory_ops_overhead", "baseline/test_thread_mgmt_overhead", "baseline/test_cpu_ops", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_strided_access", "memory/ordering/test_alignment", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch", "gil/test_lock_patterns", "gil/test_contention", "test_np_column_compute_thread", "test_ref_counting_local_scaling", "test_ref_counting_shared_scaling", "test_parallel_compute_scaling", "test_memory_bandwidth_scaling", "test_lock_contention_scaling", "test_np_column_compute_mp"], "orientation": "h", "error_x": {"type": "data", "array": [0.00017755918549806416, 0.001545400738416713, 0.002263024568219031, 0.08200441387099404, 0.001410455766718466, 0.0069507485482139765, 0.009427729626345426, 0.009519293693185533, 0.14402287652017054, 0.0009358192306513864, 0.0010147607207129249, 0.0007497772487224134, 0.010702983507804006, 0.1415681707744799, 0.0019853491059201103, 0.0004399373051100642, 0.00408260866857693, 0.0031876526158851723, 5.4918362499497215e-05, 0.0010313048757587071, 9.32214510103012e-05, 0.0005486446050072792], "visible": true}, "marker": {"color": "#f0d4a7"}}, {"type": "bar", "name": "3.13.0", "x": [0.03449583053588867, 0.06816434860229492, 0.11678123474121094, 0.6106657981872559, 1.044909954071045, 5.766668081283569, 0.3027052879333496, 7.808786630630493, 1.4493348598480225, 1.0292086601257324, 0.503953218460083, 0.507573127746582, 0.5028526782989502, 1.1319596767425537, 0.4103832244873047, 0.0579524040222168, 0.16550111770629883, 0.2785205841064453, 0.0482792854309082, 0.2141263484954834, 0.04865598678588867, 0.0587005615234375], "y": ["baseline/test_memory_ops_overhead", "baseline/test_thread_mgmt_overhead", "baseline/test_cpu_ops", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_strided_access", "memory/ordering/test_alignment", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch", "gil/test_lock_patterns", "gil/test_contention", "test_np_column_compute_thread", "test_ref_counting_local_scaling", "test_ref_counting_shared_scaling", "test_parallel_compute_scaling", "test_memory_bandwidth_scaling", "test_lock_contention_scaling", "test_np_column_compute_mp"], "orientation": "h", "error_x": {"type": "data", "array": [0.00025416530965984566, 0.0008547270214798378, 0.0006915364197958377, 0.006172280791414321, 0.002728134350034077, 0.06313951571019386, 0.0006019512377385052, 0.004485956532654064, 0.013450513163298277, 0.004828978112546914, 0.006251998311699977, 0.00153168556539628, 0.0031319387158012823, 0.6008608149144049, 0.006826288927264217, 0.00030561377528464333, 0.0011710507870193972, 0.0014665630044645452, 0.0003603619886366352, 0.0008256779176669227, 0.00024485704148712934, 0.0005749860998398407], "visible": true}, "marker": {"color": "#db9423"}}, {"type": "bar", "name": "3.12.7", "x": [0.040596961975097656, 0.06873893737792969, 0.12492489814758301, 0.5937421321868896, 0.7710881233215332, 5.430026292800903, 0.3006927967071533, 5.698485612869263, 1.6851832866668701, 1.093855381011963, 0.9669637680053711, 0.9664630889892578, 0.8956043720245361, 1.1057360172271729, 0.3742098808288574, 0.05605483055114746, 0.21995186805725098, 0.3194773197174072, 0.044348955154418945, 0.21491718292236328, 0.0450444221496582, 0.056925296783447266], "y": ["baseline/test_memory_ops_overhead", "baseline/test_thread_mgmt_overhead", "baseline/test_cpu_ops", "memory/ordering/test_false_sharing_baseline", "memory/ordering/test_strided_access", "memory/ordering/test_alignment", "memory/ordering/test_false_sharing_padded", "memory/ordering/test_sequential_access", "memory/ref_counting/test_cross_thread", "memory/ref_counting/test_thread_local", "specialization/test_dynamic_operations", "specialization/test_typed_operations", "bytecode/test_bytecode_dispatch", "gil/test_lock_patterns", "gil/test_contention", "test_np_column_compute_thread", "test_ref_counting_local_scaling", "test_ref_counting_shared_scaling", "test_parallel_compute_scaling", "test_memory_bandwidth_scaling", "test_lock_contention_scaling", "test_np_column_compute_mp"], "orientation": "h", "error_x": {"type": "data", "array": [0.0001687930295454277, 0.0006775985922229241, 0.0002641678179214127, 0.002495366691351632, 0.0005700337587141078, 0.010316042086217338, 0.000313980006841976, 0.006947687393813867, 0.01697813495890281, 0.006638272647005052, 0.006620020824300851, 0.032621314806704625, 0.01063155463205093, 0.25421585674622427, 0.0018800196826052502, 0.0004503430661702944, 0.0003819655608335499, 0.003561708121736917, 0.0005006991507250969, 0.0006336861388540915, 0.0009980480318468599, 0.00043618260394889384], "visible": true}, "marker": {"color": "#757575"}}];
+            const execTimeLayout = {"title": "Median Execution Time with Error Bars", "xaxis": {"title": "Median Execution Time (s)"}, "yaxis": {"title": "", "automargin": true, "tickfont": {"size": 11}}, "barmode": "group", "plot_bgcolor": "rgba(0,0,0,0)", "paper_bgcolor": "rgba(0,0,0,0)", "height": 800, "margin": {"l": 300, "t": 50, "b": 50, "r": 50, "pad": 4}};
+            Plotly.newPlot('exec_time', execTimeData, execTimeLayout);
+    
+            const scalingData_0 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [0.991177248564383, 1.9112200659761927, 3.2820896787500353, 3.88336174907231, 2.057985649747542, 1.144091083687077], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [1.0326150013650013, 1.990183827156434, 3.5392555337875375, 4.534909424701673, 2.194962280574496, 1.2201512096774194], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [0.9787773492052936, 1.8777290487201979, 3.3711169009648696, 5.412351467512469, 5.895108396335052, 3.9969787494059337], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_0 = {"title": "test_np_column_compute_thread - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_0', scalingData_0, scalingLayout_0);
+        
+            const scalingData_1 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [1.000977507540617, 1.0020060038618024, 1.0014555391532418, 1.0034564547739624, 1.0089642111077743, 1.0135788305448268], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [1.0122619657917147, 1.0133562574303256, 1.0129878341442946, 1.0151029906455924, 1.0187411843596088, 1.0191860044820358], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [1.014115247838471, 2.022819504276706, 4.039934776874565, 8.019487350358188, 7.052539045330676, 7.477316503785761], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_1 = {"title": "test_ref_counting_local_scaling - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_1', scalingData_1, scalingLayout_1);
+        
+            const scalingData_2 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [1.02186648024124, 0.9693322709659083, 0.9924186437377809, 0.9956494396774587, 0.9957275323249254, 0.99228720517033], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [0.9793723536570239, 0.9554632698098875, 0.9589233546692927, 0.9517737266585977, 0.9579313069839047, 0.9557891568433072], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [0.7172893444453347, 0.4553389014702929, 0.387128351424475, 0.5154200130917244, 0.41870072162673183, 0.4095872391298465], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_2 = {"title": "test_ref_counting_shared_scaling - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_2', scalingData_2, scalingLayout_2);
+        
+            const scalingData_3 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [1.0710093764756143, 1.0722631187951643, 1.0727159096667398, 1.0689842842635038, 1.0701791832837162, 1.073804169555146], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [1.012509898657792, 1.020231097105226, 1.0189394894660124, 1.0224359136574133, 1.0289768704572426, 1.0317147409707468], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [0.996819469482359, 1.9696293783394114, 3.8811939101224993, 7.15969417640349, 6.412607687210073, 6.122992960531519], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_3 = {"title": "test_parallel_compute_scaling - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_3', scalingData_3, scalingLayout_3);
+        
+            const scalingData_4 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [0.9949903036356681, 0.9967518482767456, 0.9963446999805698, 1.029688205952017, 1.0312424656203758, 1.015515782461731], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [1.0031173211812536, 1.0011749532081016, 0.9656640270094458, 1.040029228389057, 1.0266519279923547, 1.0131661477370155], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [1.0025494324623647, 1.993907503399714, 3.8011883620188875, 7.136481761923458, 6.095348354438465, 6.7585830387232715], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_4 = {"title": "test_memory_bandwidth_scaling - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_4', scalingData_4, scalingLayout_4);
+        
+                const bandwidthData_4 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [352.7955186149248, 353.42011269683843, 353.2757493861834, 365.09841684198994, 365.64951351474883, 360.07327491144446], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [357.4141089219497, 356.72203661528755, 344.06937298732856, 370.56594684231493, 365.79956927100716, 360.99453995758313], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [280.1574134466804, 557.1874570138583, 1062.223033642595, 1994.2540555025832, 1703.3145436447737, 1888.6521515879433], "line": {"color": "#f0d4a7"}}];
+                const bandwidthLayout_4 = {"title": "test_memory_bandwidth_scaling - Memory Bandwidth vs Thread Count", "xaxis": {"title": "Thread Count", "type": "log", "tickmode": "array", "tickvals": [1, 2, 4, 8, 16, 32], "ticktext": ["1", "2", "4", "8", "16", "32"]}, "yaxis": {"title": "Bandwidth (MB/s)"}, "showlegend": true, "height": 600, "grid": {"pattern": "independent"}};
+                Plotly.newPlot('bandwidth_plot_4', bandwidthData_4, bandwidthLayout_4);
+            
+            const scalingData_5 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8, 16, 32], "y": [1.0772546627057662, 1.077469688501591, 1.0783860454231522, 1.0766837252242498, 1.0799826224147984, 1.0832458961877405], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8, 16, 32], "y": [0.9925940694202658, 0.9948629719705425, 0.9935603516252446, 0.9942620834774307, 1.0000244956348778, 1.003929688575869], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8, 16, 32], "y": [0.999918496911462, 1.0037246593981983, 1.003370380254651, 1.0037765261127187, 1.0132182908806397, 1.0087240625743774], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_5 = {"title": "test_lock_contention_scaling - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_5', scalingData_5, scalingLayout_5);
+        
+            const scalingData_6 = [{"type": "scatter", "name": "3.12.7", "x": [1, 2, 4, 8], "y": [0.3841224502367594, 0.2868678602040668, 0.16952943230241335, 0.09535920980563468], "line": {"color": "#757575"}}, {"type": "scatter", "name": "3.13.0", "x": [1, 2, 4, 8], "y": [0.39970025754570104, 0.31309141473496516, 0.18750170644322625, 0.1026896175603329], "line": {"color": "#db9423"}}, {"type": "scatter", "name": "3.13.0t", "x": [1, 2, 4, 8], "y": [0.32384355702383827, 0.23906665647146888, 0.1376084838952161, 0.07260666976915017], "line": {"color": "#f0d4a7"}}];
+            const scalingLayout_6 = {"title": "test_np_column_compute_mp - Speedup vs Thread Count", "xaxis": {"title": "Thread Count"}, "yaxis": {"title": "Speedup"}, "showlegend": true, "height": 600};
+            Plotly.newPlot('scaling_plot_6', scalingData_6, scalingLayout_6);
+        </script><h2>Statistics</h2><table><h2>Regular Test Statistics</h2><table>
+            <tr class="header">
+                <td colspan="7">baseline/test_memory_ops_overhead</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.0406</td>
+            <td>0.0002</td>
+            <td>0.0406</td>
+            <td>0.0403</td>
+            <td>0.0407</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.0345</td>
+            <td>0.0003</td>
+            <td>0.0346</td>
+            <td>0.0343</td>
+            <td>0.0350</td>
+            <td>85.25%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0445</td>
+            <td>0.0002</td>
+            <td>0.0445</td>
+            <td>0.0442</td>
+            <td>0.0446</td>
+            <td>109.65%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">baseline/test_thread_mgmt_overhead</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.0687</td>
+            <td>0.0007</td>
+            <td>0.0688</td>
+            <td>0.0678</td>
+            <td>0.0695</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.0682</td>
+            <td>0.0009</td>
+            <td>0.0686</td>
+            <td>0.0679</td>
+            <td>0.0699</td>
+            <td>99.64%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0848</td>
+            <td>0.0015</td>
+            <td>0.0845</td>
+            <td>0.0820</td>
+            <td>0.0860</td>
+            <td>122.79%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">baseline/test_cpu_ops</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.1249</td>
+            <td>0.0003</td>
+            <td>0.1249</td>
+            <td>0.1246</td>
+            <td>0.1253</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.1168</td>
+            <td>0.0007</td>
+            <td>0.1170</td>
+            <td>0.1165</td>
+            <td>0.1182</td>
+            <td>93.67%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.2589</td>
+            <td>0.0023</td>
+            <td>0.2594</td>
+            <td>0.2568</td>
+            <td>0.2625</td>
+            <td>207.61%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_false_sharing_baseline</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.5937</td>
+            <td>0.0025</td>
+            <td>0.5939</td>
+            <td>0.5904</td>
+            <td>0.5974</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.6107</td>
+            <td>0.0062</td>
+            <td>0.6083</td>
+            <td>0.6011</td>
+            <td>0.6151</td>
+            <td>102.42%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>1.8179</td>
+            <td>0.0820</td>
+            <td>1.8155</td>
+            <td>1.7395</td>
+            <td>1.9367</td>
+            <td>305.67%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_strided_access</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.7711</td>
+            <td>0.0006</td>
+            <td>0.7711</td>
+            <td>0.7703</td>
+            <td>0.7718</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>1.0449</td>
+            <td>0.0027</td>
+            <td>1.0447</td>
+            <td>1.0418</td>
+            <td>1.0489</td>
+            <td>135.48%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>1.1641</td>
+            <td>0.0014</td>
+            <td>1.1635</td>
+            <td>1.1618</td>
+            <td>1.1649</td>
+            <td>150.88%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_alignment</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>5.4300</td>
+            <td>0.0103</td>
+            <td>5.4311</td>
+            <td>5.4199</td>
+            <td>5.4461</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>5.7667</td>
+            <td>0.0631</td>
+            <td>5.7687</td>
+            <td>5.6692</td>
+            <td>5.8255</td>
+            <td>106.22%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>6.4593</td>
+            <td>0.0070</td>
+            <td>6.4564</td>
+            <td>6.4460</td>
+            <td>6.4627</td>
+            <td>118.88%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_false_sharing_padded</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.3007</td>
+            <td>0.0003</td>
+            <td>0.3006</td>
+            <td>0.3001</td>
+            <td>0.3009</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.3027</td>
+            <td>0.0006</td>
+            <td>0.3029</td>
+            <td>0.3022</td>
+            <td>0.3037</td>
+            <td>100.77%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.5613</td>
+            <td>0.0094</td>
+            <td>0.5586</td>
+            <td>0.5477</td>
+            <td>0.5691</td>
+            <td>185.84%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ordering/test_sequential_access</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>5.6985</td>
+            <td>0.0069</td>
+            <td>5.6953</td>
+            <td>5.6834</td>
+            <td>5.7000</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>7.8088</td>
+            <td>0.0045</td>
+            <td>7.8100</td>
+            <td>7.8045</td>
+            <td>7.8149</td>
+            <td>137.13%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>8.6345</td>
+            <td>0.0095</td>
+            <td>8.6350</td>
+            <td>8.6240</td>
+            <td>8.6460</td>
+            <td>151.62%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ref_counting/test_cross_thread</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>1.6852</td>
+            <td>0.0170</td>
+            <td>1.6920</td>
+            <td>1.6775</td>
+            <td>1.7182</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>1.4493</td>
+            <td>0.0135</td>
+            <td>1.4539</td>
+            <td>1.4409</td>
+            <td>1.4746</td>
+            <td>85.93%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>5.7245</td>
+            <td>0.1440</td>
+            <td>5.8029</td>
+            <td>5.6588</td>
+            <td>5.9832</td>
+            <td>342.97%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">memory/ref_counting/test_thread_local</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>1.0939</td>
+            <td>0.0066</td>
+            <td>1.0978</td>
+            <td>1.0913</td>
+            <td>1.1056</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>1.0292</td>
+            <td>0.0048</td>
+            <td>1.0284</td>
+            <td>1.0215</td>
+            <td>1.0345</td>
+            <td>93.68%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.2505</td>
+            <td>0.0009</td>
+            <td>0.2504</td>
+            <td>0.2490</td>
+            <td>0.2516</td>
+            <td>22.81%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">specialization/test_dynamic_operations</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.9670</td>
+            <td>0.0066</td>
+            <td>0.9694</td>
+            <td>0.9637</td>
+            <td>0.9793</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.5040</td>
+            <td>0.0063</td>
+            <td>0.5049</td>
+            <td>0.4993</td>
+            <td>0.5155</td>
+            <td>52.09%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.6981</td>
+            <td>0.0010</td>
+            <td>0.6979</td>
+            <td>0.6964</td>
+            <td>0.6989</td>
+            <td>71.99%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">specialization/test_typed_operations</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.9665</td>
+            <td>0.0326</td>
+            <td>0.9445</td>
+            <td>0.9076</td>
+            <td>0.9699</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.5076</td>
+            <td>0.0015</td>
+            <td>0.5079</td>
+            <td>0.5061</td>
+            <td>0.5099</td>
+            <td>53.77%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.6988</td>
+            <td>0.0007</td>
+            <td>0.6992</td>
+            <td>0.6985</td>
+            <td>0.7002</td>
+            <td>74.03%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">bytecode/test_bytecode_dispatch</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.8956</td>
+            <td>0.0106</td>
+            <td>0.8960</td>
+            <td>0.8843</td>
+            <td>0.9075</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.5029</td>
+            <td>0.0031</td>
+            <td>0.5012</td>
+            <td>0.4969</td>
+            <td>0.5039</td>
+            <td>55.93%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.6993</td>
+            <td>0.0107</td>
+            <td>0.7039</td>
+            <td>0.6984</td>
+            <td>0.7230</td>
+            <td>78.56%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">gil/test_lock_patterns</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>1.1057</td>
+            <td>0.2542</td>
+            <td>1.1234</td>
+            <td>0.8508</td>
+            <td>1.5142</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>1.1320</td>
+            <td>0.6009</td>
+            <td>1.2668</td>
+            <td>0.7542</td>
+            <td>2.2573</td>
+            <td>112.76%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>5.0167</td>
+            <td>0.1416</td>
+            <td>5.0493</td>
+            <td>4.9205</td>
+            <td>5.2399</td>
+            <td>449.46%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="7">gil/test_contention</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Median</th>
+                <th>Stddev</th>
+                <th>Mean</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Execution Time Increase</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.3742</td>
+            <td>0.0019</td>
+            <td>0.3744</td>
+            <td>0.3721</td>
+            <td>0.3772</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.4104</td>
+            <td>0.0068</td>
+            <td>0.4119</td>
+            <td>0.4067</td>
+            <td>0.4235</td>
+            <td>110.01%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0968</td>
+            <td>0.0020</td>
+            <td>0.0977</td>
+            <td>0.0966</td>
+            <td>0.1012</td>
+            <td>26.08%</td>
+        </tr>
+        </table><h2>Scaling Test Statistics</h2><table>
+            <tr class="header">
+                <td colspan="6">test_np_column_compute_thread</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.0561</td>
+            <td>1.14x</td>
+            <td>3.58%</td>
+            <td>32</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.0580</td>
+            <td>1.22x</td>
+            <td>3.81%</td>
+            <td>32</td>
+            <td>106.65%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0560</td>
+            <td>4.00x</td>
+            <td>12.49%</td>
+            <td>32</td>
+            <td>349.36%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="6">test_ref_counting_local_scaling</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.2200</td>
+            <td>1.01x</td>
+            <td>3.17%</td>
+            <td>32</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.1655</td>
+            <td>1.02x</td>
+            <td>3.18%</td>
+            <td>32</td>
+            <td>100.55%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.4014</td>
+            <td>7.48x</td>
+            <td>23.37%</td>
+            <td>32</td>
+            <td>737.71%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="6">test_ref_counting_shared_scaling</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.3195</td>
+            <td>0.99x</td>
+            <td>3.10%</td>
+            <td>32</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.2785</td>
+            <td>0.96x</td>
+            <td>2.99%</td>
+            <td>32</td>
+            <td>96.32%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.4999</td>
+            <td>0.41x</td>
+            <td>1.28%</td>
+            <td>32</td>
+            <td>41.28%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="6">test_parallel_compute_scaling</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.0443</td>
+            <td>1.07x</td>
+            <td>3.36%</td>
+            <td>32</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.0483</td>
+            <td>1.03x</td>
+            <td>3.22%</td>
+            <td>32</td>
+            <td>96.08%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0554</td>
+            <td>6.12x</td>
+            <td>19.13%</td>
+            <td>32</td>
+            <td>570.22%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="6">test_memory_bandwidth_scaling</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.2149</td>
+            <td>1.02x</td>
+            <td>3.17%</td>
+            <td>32</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.2141</td>
+            <td>1.01x</td>
+            <td>3.17%</td>
+            <td>32</td>
+            <td>99.77%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.2723</td>
+            <td>6.76x</td>
+            <td>21.12%</td>
+            <td>32</td>
+            <td>665.53%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="6">test_lock_contention_scaling</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.0450</td>
+            <td>1.08x</td>
+            <td>3.39%</td>
+            <td>32</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.0487</td>
+            <td>1.00x</td>
+            <td>3.14%</td>
+            <td>32</td>
+            <td>92.68%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0555</td>
+            <td>1.01x</td>
+            <td>3.15%</td>
+            <td>32</td>
+            <td>93.12%</td>
+        </tr>
+        
+            <tr class="header">
+                <td colspan="6">test_np_column_compute_mp</td>
+            </tr>
+            <tr>
+                <th>Python Version</th>
+                <th>Base Duration</th>
+                <th>Max Speedup</th>
+                <th>Efficiency</th>
+                <th>Max Threads</th>
+                <th>Relative Performance</th>
+            </tr>
+            
+        <tr class="baseline">
+            <td>3.12.7</td>
+            <td>0.0569</td>
+            <td>0.10x</td>
+            <td>1.19%</td>
+            <td>8</td>
+            <td>100.00%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0</td>
+            <td>0.0587</td>
+            <td>0.10x</td>
+            <td>1.28%</td>
+            <td>8</td>
+            <td>107.69%</td>
+        </tr>
+        
+        <tr class="">
+            <td>3.13.0t</td>
+            <td>0.0572</td>
+            <td>0.07x</td>
+            <td>0.91%</td>
+            <td>8</td>
+            <td>76.14%</td>
+        </tr>
+        </table></body></html>
