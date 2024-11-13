@@ -26,6 +26,17 @@ def extract_existing_runs(html_file):
             })
     return runs
 
+def get_cpu_freq_display(cpu_freq):
+    """Get displayable CPU frequency string"""
+    if isinstance(cpu_freq, dict):
+        if 'current' in cpu_freq and cpu_freq['current'] not in ['N/A', None]:
+            return f"@ {cpu_freq['current']:.2f} MHz"
+        # Try to get any available frequency info
+        freq_values = [v for v in cpu_freq.values() if v not in ['N/A', None]]
+        if freq_values:
+            return f"@ {freq_values[0]:.2f} MHz"
+    return ""  # Return empty string if no valid frequency found
+
 def update_index_page(json_file='benchmark_results.json', index_file='index.html', run_id=None):
     """Update index.html with new benchmark run"""
     with open(json_file, 'r') as f:
@@ -104,12 +115,17 @@ def update_index_page(json_file='benchmark_results.json', index_file='index.html
     td_time.string = timestamp.strftime('%Y-%m-%d %H:%M:%S')
     new_row.append(td_time)
     
-    # Add system info
+    # Add system info with graceful CPU frequency handling
     td_sys = soup.new_tag('td')
     sys_div = soup.new_tag('div')
     sys_div['class'] = 'system-info'
-    sys_div.append(f"CPU: {system_info['cpu_count']} cores @ {system_info['cpu_freq']['current']:.2f} MHz\n")
+    
+    # CPU info with graceful frequency handling
+    cpu_freq_str = get_cpu_freq_display(system_info['cpu_freq'])
+    sys_div.append(f"CPU: {system_info['cpu_count']} cores {cpu_freq_str}\n")
     sys_div.append(soup.new_tag('br'))
+    
+    # Rest of system info
     sys_div.append(f"Memory: {system_info['memory_total'] / (1024**3):.2f} GB\n")
     sys_div.append(soup.new_tag('br'))
     sys_div.append(f"OS: {system_info['os_info']}")
