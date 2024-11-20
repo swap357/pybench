@@ -19,7 +19,6 @@ def no_op_worker():
 def main():
     num_threads = 1000 
     threads = []
-    start = time.time()
     
     for _ in range(num_threads):
         thread = threading.Thread(target=no_op_worker)
@@ -30,8 +29,6 @@ def main():
     for thread in threads:
         thread.join()
     
-    duration = time.time() - start
-    print(f"Duration: {duration:.4f}")
     return 0
 
 if __name__ == "__main__":

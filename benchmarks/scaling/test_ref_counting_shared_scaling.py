@@ -50,7 +50,7 @@ def run_threaded_test(num_threads, iterations_per_thread, pool_size):
     results = [0] * num_threads
     object_pool = SharedObjectPool(pool_size)
     
-    start = time.time()
+    start = time.perf_counter()
     
     for i in range(num_threads):
         t = threading.Thread(
@@ -63,7 +63,7 @@ def run_threaded_test(num_threads, iterations_per_thread, pool_size):
     for t in threads:
         t.join()
         
-    duration = time.time() - start
+    duration = time.perf_counter() - start
     return duration, sum(results)
 
 def main():
@@ -93,16 +93,16 @@ def main():
     
     # Baseline measurement
     object_pool = SharedObjectPool(pool_size)
-    start = time.time()
+    start = time.perf_counter()
     baseline_result = object_intensive_shared(base_iterations, object_pool)
-    baseline_duration = time.time() - start
+    baseline_duration = time.perf_counter() - start
     
     baseline_refs_per_sec = base_iterations / baseline_duration
     
     results = {
         "metadata": metadata,
         "baseline": {
-            "duration": baseline_duration,
+            "duration": round(baseline_duration, 4),
             "refs_per_sec": baseline_refs_per_sec,
             "result": baseline_result,
             "total_refs": base_iterations,
@@ -135,7 +135,7 @@ def main():
             "iterations_per_thread": iterations_per_thread,
             
             # Primary dependent variables
-            "duration": duration,
+            "duration": round(duration, 4),
             "speedup": speedup,
             
             # Reference counting metrics

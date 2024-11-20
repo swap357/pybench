@@ -24,8 +24,6 @@ def main():
     for i in range(data_size):
         aligned[i] = i
     
-    start = time.time()
-    
     # Strided access (cache-unfriendly)
     sum_strided = 0
     stride = cache_line // ctypes.sizeof(ctypes.c_long)
@@ -33,8 +31,6 @@ def main():
         for i in range(0, data_size, stride):
             sum_strided += aligned[i]
     
-    duration = time.time() - start
-    print(f"Duration: {duration:.4f}")
     return 0
 
 if __name__ == "__main__":

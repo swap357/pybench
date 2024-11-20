@@ -23,16 +23,12 @@ def main():
     for i in range(data_size):
         unaligned[i] = i
     
-    start = time.time()
-    
     # Unaligned access
     sum_unaligned = 0
     for _ in range(iterations):
         for i in range(0, data_size):
             sum_unaligned += unaligned[i]
     
-    duration = time.time() - start
-    print(f"Duration: {duration:.4f}")
     return 0
 
 if __name__ == "__main__":

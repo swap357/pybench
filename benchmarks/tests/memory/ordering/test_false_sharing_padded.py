@@ -36,8 +36,6 @@ def main():
         for _ in range(iterations):
             counters[counter_index] += 1
     
-    start = time.time()
-    
     # Create and start threads
     for i in range(num_threads):
         thread = threading.Thread(target=worker, args=(i,))
@@ -48,8 +46,6 @@ def main():
     for thread in threads:
         thread.join()
     
-    duration = time.time() - start
-    print(f"Duration: {duration:.4f}")
     return 0
 
 if __name__ == "__main__":

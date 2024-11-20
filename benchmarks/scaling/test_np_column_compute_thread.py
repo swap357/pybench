@@ -70,7 +70,7 @@ def run_threaded_test(num_threads, total_samples, num_features):
     data = np.random.randn(total_samples, num_features)
     samples_per_thread = total_samples // num_threads
     
-    start = time.time()
+    start = time.perf_counter()
     
     for i in range(num_threads):
         start_idx = i * samples_per_thread
@@ -87,7 +87,7 @@ def run_threaded_test(num_threads, total_samples, num_features):
     for t in threads:
         t.join()
         
-    duration = time.time() - start
+    duration = time.perf_counter() - start
     return duration, sum(results)
 
 def main():
@@ -118,16 +118,16 @@ def main():
     # Baseline measurement
     data = np.random.randn(total_samples, num_features)
     baseline_results = [0]
-    start = time.time()
+    start = time.perf_counter()
     process_batch(data, baseline_results, 0)
-    baseline_duration = time.time() - start
+    baseline_duration = time.perf_counter() - start
     
     baseline_samples_per_sec = total_samples / baseline_duration
     
     results = {
         "metadata": metadata,
         "baseline": {
-            "duration": baseline_duration,
+            "duration": round(baseline_duration, 4),
             "samples_per_sec": baseline_samples_per_sec,
             "result": float(baseline_results[0]),
             "total_samples": total_samples
@@ -154,7 +154,7 @@ def main():
             "samples_per_thread": samples_per_thread,
             
             # Primary dependent variables
-            "duration": duration,
+            "duration": round(duration, 4),
             "speedup": speedup,
             
             # Throughput metrics

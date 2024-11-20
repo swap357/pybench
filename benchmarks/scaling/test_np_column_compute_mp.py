@@ -78,7 +78,7 @@ def run_mp_test(num_processes, total_samples, num_features):
         result_queue = mp.Queue()
         processes = []
         
-        start = time.time()
+        start = time.perf_counter()
         
         # Start processes
         for i in range(num_processes):
@@ -105,7 +105,7 @@ def run_mp_test(num_processes, total_samples, num_features):
         for p in processes:
             p.join()
             
-        duration = time.time() - start
+        duration = time.perf_counter() - start
         return duration, sum(results)
         
     except Exception as e:
@@ -147,16 +147,16 @@ def main():
     
     # Baseline measurement
     data = np.random.randn(total_samples, num_features)
-    start = time.time()
+    start = time.perf_counter()
     baseline_result = process_batch(data)
-    baseline_duration = time.time() - start
+    baseline_duration = time.perf_counter() - start
     
     baseline_samples_per_sec = total_samples / baseline_duration
     
     results = {
         "metadata": metadata,
         "baseline": {
-            "duration": baseline_duration,
+            "duration": round(baseline_duration, 4),
             "samples_per_sec": baseline_samples_per_sec,
             "result": float(baseline_result),
             "total_samples": total_samples
@@ -184,7 +184,7 @@ def main():
             "samples_per_process": samples_per_process,
             
             # Primary dependent variables
-            "duration": duration,
+            "duration": round(duration, 4),
             "speedup": speedup,
             
             # Throughput metrics

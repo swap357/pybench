@@ -7,8 +7,7 @@ Purpose:
 - No memory allocation
 - No object creation
 - Arithmetic and math operations only
-"""
-import time
+""" 
 import sys
 import math
 
@@ -20,10 +19,7 @@ def compute_intensive():
     return result
 
 def main():
-    start = time.time()
-    result = compute_intensive()
-    duration = time.time() - start
-    print(f"Duration: {duration:.4f}")
+    compute_intensive()
     return 0
 
 if __name__ == "__main__":

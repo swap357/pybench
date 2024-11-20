@@ -30,7 +30,7 @@ def run_parallel_test(num_threads, iterations_per_thread):
     threads = []
     results = [0] * num_threads
     
-    start = time.time()
+    start = time.perf_counter()
     
     # Create and start threads
     for i in range(num_threads):
@@ -45,7 +45,7 @@ def run_parallel_test(num_threads, iterations_per_thread):
     for t in threads:
         t.join()
         
-    duration = time.time() - start
+    duration = time.perf_counter() - start
     return duration, sum(results)
 
 def main():
@@ -71,17 +71,17 @@ def main():
     }
     
     # Baseline measurement (single-threaded)
-    start = time.time()
+    start = time.perf_counter()
     baseline_results = [0]
     thread_worker(base_iterations, baseline_results, 0)
-    baseline_duration = time.time() - start
+    baseline_duration = time.perf_counter() - start
     
     baseline_ops_per_sec = base_iterations / baseline_duration
     
     results = {
         "metadata": metadata,
         "baseline": {
-            "duration": baseline_duration,
+            "duration": round(baseline_duration, 4),
             "ops_per_sec": baseline_ops_per_sec,
             "result": baseline_results[0],
             "total_ops": base_iterations
@@ -109,7 +109,7 @@ def main():
             "iterations_per_thread": iterations_per_thread,
             
             # Primary dependent variables
-            "duration": duration,
+            "duration": round(duration, 4),
             "speedup": speedup,
             
             # Performance metrics

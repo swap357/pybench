@@ -116,7 +116,7 @@ print(f"{gil_disabled}")
         try:
             # Create a temporary file for output capture
             with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_out:
-                start_time = time.time()
+                start_time = time.perf_counter()
                 
                 # Run the benchmark with output redirection
                 process = subprocess.Popen(
@@ -128,7 +128,7 @@ print(f"{gil_disabled}")
                 )
                 
                 _, stderr = process.communicate()
-                duration = time.time() - start_time
+                duration = time.perf_counter() - start_time
                 
                 # Read the captured output
                 temp_out.seek(0)
@@ -138,13 +138,13 @@ print(f"{gil_disabled}")
                     return {
                         'success': False,
                         'error': stderr.strip() or 'Process failed',
-                        'duration': duration,
+                        'duration': round(duration, 4),
                         'output': output
                     }
                 
                 return {
                     'success': True,
-                    'duration': duration,
+                    'duration': round(duration, 4),
                     'output': output
                 }
                 

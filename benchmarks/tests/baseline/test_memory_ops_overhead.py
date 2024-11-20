@@ -22,10 +22,7 @@ def memory_intensive():
     return len(objects)
 
 def main():
-    start = time.time()
-    result = memory_intensive()
-    duration = time.time() - start
-    print(f"Duration: {duration:.4f}")
+    memory_intensive()
     return 0
 
 if __name__ == "__main__":
