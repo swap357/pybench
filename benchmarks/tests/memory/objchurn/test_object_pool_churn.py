@@ -1,20 +1,19 @@
 """
-Test thread-local object reference counting.
-Shows performance of reference counting for thread-local objects.
+Test object pool churn patterns in thread-local context.
+Measures performance of managing multiple objects with fixed-size pools.
 
 Purpose:
-- Measure thread-local ref counting overhead
-- Test biased reference counting benefits
-- Evaluate object lifecycle in single thread
-- Baseline for cross-thread comparison
+- Evaluate object pool management overhead
+- Test memory churn with multiple objects
+- Measure thread-local pool access patterns
+- Compare pool-based vs single-object patterns
 """
-import time
 import sys
 import threading
 from benchmarks.utils import get_total_threads
 
 class TestObject:
-    """Test object with no special handling"""
+    """Test object with substantial memory footprint"""
     def __init__(self, value):
         self.value = value
         # List overhead: 56 bytes (empty list)
@@ -28,16 +27,19 @@ def main():
     threads = []
     
     def worker():
+        # Create fixed-size object pool
         objects_pool = [TestObject(i) for i in range(100)]
         local_refs = [None] * 100
         
+        # Calculate passes to maintain total iteration count
         num_passes = iterations // len(objects_pool)
-
+        
+        # Pool churn loop - cycle through all objects
         for _ in range(num_passes):
             for i in range(len(objects_pool)):
-                local_refs[i] = objects_pool[i]  # INCREF
-                local_refs[i] = None             # DECREF
-
+                local_refs[i] = objects_pool[i]
+                local_refs[i] = None
+    
     # Create and start threads
     for _ in range(total_threads):
         thread = threading.Thread(target=worker)
@@ -47,8 +49,8 @@ def main():
     # Wait for all threads
     for thread in threads:
         thread.join()
-    
+
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

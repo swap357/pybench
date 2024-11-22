@@ -103,7 +103,7 @@ class BenchmarkRunner:
     BENCHMARK_CATEGORIES = [
         'baseline',
         'memory/ordering',
-        'memory/ref_counting',
+        'memory/objchurn',
         'specialization',
         'bytecode',
         'gil'
@@ -139,9 +139,15 @@ class BenchmarkRunner:
             'benchmarks',
             'benchmarks/tests'
         ]
+        
         # Add category directories from BENCHMARK_CATEGORIES
         for category in self.BENCHMARK_CATEGORIES:
-            required_dirs.append(f'benchmarks/tests/{category}')
+            # Split nested paths and create each level
+            path_parts = category.split('/')
+            current_path = 'benchmarks/tests'
+            for part in path_parts:
+                current_path = f'{current_path}/{part}'
+                required_dirs.append(current_path)
         
         for dir_path in required_dirs:
             os.makedirs(dir_path, exist_ok=True)

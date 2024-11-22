@@ -1,1 +1,1 @@
-"""Benchmark modules."""
+"""Package initialization."""
