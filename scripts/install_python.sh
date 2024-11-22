@@ -13,11 +13,7 @@ echo "Installing Python versions for architecture: $ARCH"
 BASELINE_VERSION="3.12.7"
 if ! pyenv versions | grep "$BASELINE_VERSION" > /dev/null; then
     echo "Installing Python $BASELINE_VERSION..."
-    if [ "$ARCH" = "aarch64" ]; then
-        PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install -s $BASELINE_VERSION
-    else
-        PYTHON_CONFIGURE_OPTS="--enable-optimizations" pyenv install -s $BASELINE_VERSION
-    fi
+    PYTHON_CONFIGURE_OPTS="--enable-optimizations" pyenv install -v -s $BASELINE_VERSION
 fi
 
 pyenv global $BASELINE_VERSION
@@ -33,11 +29,7 @@ VERSIONS=$(python -c "from benchmark_runner import BenchmarkRunner; print(' '.jo
 for version in $VERSIONS; do
     if ! pyenv versions | grep "$version" > /dev/null; then
         echo "Installing Python $version..."
-        if [ "$ARCH" = "aarch64" ]; then
-            PYTHON_CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install -s $version --force
-        else
-            PYTHON_CONFIGURE_OPTS="--enable-optimizations" pyenv install -s $version --force
-        fi
+        PYTHON_CONFIGURE_OPTS="--enable-optimizations" pyenv install -v -s $version --force
     fi
 done
 
