@@ -2,17 +2,15 @@
 Test bytecode dispatch overhead differences between interpreters.
 Focus on function call overhead and basic operations.
 """
-import time
 import sys
 
-def tiny_function():
+def tiny_load_const():
+    """Single LOAD_CONST instruction."""
     return 42
 
 def main():
-    # Many small function calls to stress bytecode dispatch
-    result = 0
     for _ in range(10_000_000):
-        result += tiny_function()
+        tiny_load_const()
 
     return 0
 
