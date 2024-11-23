@@ -13,12 +13,12 @@ import sys
 import threading
 import array
 import ctypes
-import os
+from benchmarks.utils import get_total_threads
 
 def main():
     iterations = 1_000_000
     # Use environment variable or default to 4
-    num_threads = int(os.environ.get('BENCHMARK_THREAD_LIMIT', '4'))
+    num_threads = get_total_threads()
     threads = []
     
     # Calculate padding to align with cache lines
