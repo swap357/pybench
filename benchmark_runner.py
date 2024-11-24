@@ -121,7 +121,7 @@ class BenchmarkRunner:
     }
     BASELINE_VERSION = "3.12.7"
 
-    def __init__(self, iterations: int = 5, profile: bool = True):
+    def __init__(self, iterations: int = 5, profile: bool = True, category: str = 'all'):
         self.environments = []
         self._init_package_structure()
         self._init_environments()
@@ -131,6 +131,7 @@ class BenchmarkRunner:
         self.console = Console()
         self.iterations = iterations
         self.profile = profile
+        self.category = category
         self.system_info = self._collect_system_info()
 
     def _init_package_structure(self):
@@ -303,46 +304,73 @@ class BenchmarkRunner:
             TimeRemainingColumn(),
             console=self.console
         ) as progress:
-            # Calculate total tests to run
+            # Calculate total tests to run based on category
             total_tests = 0
             if hasattr(self, 'test_filter'):
                 if self.test_filter:
-                    # Count matching tests in both regular and scaling
-                    total_tests += len([t for t in discovered_tests["regular"] 
-                                      if any(f in t for f in self.test_filter)])
-                    total_tests += len([t for t in discovered_tests["scaling"] 
-                                      if any(f in t for f in self.test_filter)])
+                    # Count matching tests in selected category
+                    if hasattr(self, 'category') and self.category != 'all':
+                        if self.category == 'scaling':
+                            total_tests = len([t for t in discovered_tests["scaling"] 
+                                             if any(f in t for f in self.test_filter)])
+                        else:
+                            total_tests = len([t for t in discovered_tests["regular"] 
+                                             if any(f in t for f in self.test_filter)])
+                    else:
+                        total_tests = (len([t for t in discovered_tests["regular"] 
+                                          if any(f in t for f in self.test_filter)]) +
+                                     len([t for t in discovered_tests["scaling"] 
+                                          if any(f in t for f in self.test_filter)]))
                 else:
-                    total_tests = len(discovered_tests["regular"]) + len(discovered_tests["scaling"])
-            else:
-                total_tests = len(discovered_tests["regular"]) + len(discovered_tests["scaling"])
+                    if hasattr(self, 'category') and self.category != 'all':
+                        if self.category == 'scaling':
+                            total_tests = len(discovered_tests["scaling"])
+                        else:
+                            total_tests = len(discovered_tests["regular"])
+                    else:
+                        total_tests = len(discovered_tests["regular"]) + len(discovered_tests["scaling"])
                 
             overall_task = progress.add_task(
                 "[yellow]Overall progress",
                 total=total_tests * len(self.environments) * self.iterations
             )
 
-            # Run regular tests
-            for test_path in discovered_tests["regular"]:
-                test_name = str(test_path).replace('.py', '')
-                if hasattr(self, 'test_filter') and self.test_filter:
-                    if not any(f in test_path for f in self.test_filter):
-                        continue
-                results["regular"][test_name] = self._run_regular_test(
-                    test_path, progress, overall_task
-                )
-                self.display_results({test_name: results["regular"][test_name]})
+            # Run only scaling tests if category is scaling
+            if hasattr(self, 'category') and self.category == 'scaling':
+                # Run scaling tests only
+                for test_path in discovered_tests["scaling"]:
+                    test_name = str(test_path).replace('.py', '')
+                    if hasattr(self, 'test_filter') and self.test_filter:
+                        if not any(f in test_path for f in self.test_filter):
+                            continue
+                    results["scaling"][test_name] = self._run_scaling_test(
+                        test_path, progress, overall_task
+                    )
+                    self.display_scaling_results({test_name: results["scaling"][test_name]})
+            else:
+                # Run regular tests if not scaling category
+                if self.category != 'scaling':
+                    for test_path in discovered_tests["regular"]:
+                        test_name = str(test_path).replace('.py', '')
+                        if hasattr(self, 'test_filter') and self.test_filter:
+                            if not any(f in test_path for f in self.test_filter):
+                                continue
+                        results["regular"][test_name] = self._run_regular_test(
+                            test_path, progress, overall_task
+                        )
+                        self.display_results({test_name: results["regular"][test_name]})
 
-            # Run scaling tests
-            for test_path in discovered_tests["scaling"]:
-                test_name = str(test_path).replace('.py', '')
-                if hasattr(self, 'test_filter') and self.test_filter:
-                    if not any(f in test_path for f in self.test_filter):
-                        continue
-                results["scaling"][test_name] = self._run_scaling_test(
-                    test_path, progress, overall_task
-                )
-                self.display_scaling_results({test_name: results["scaling"][test_name]})
+                # Run scaling tests if category is all
+                if self.category == 'all':
+                    for test_path in discovered_tests["scaling"]:
+                        test_name = str(test_path).replace('.py', '')
+                        if hasattr(self, 'test_filter') and self.test_filter:
+                            if not any(f in test_path for f in self.test_filter):
+                                continue
+                        results["scaling"][test_name] = self._run_scaling_test(
+                            test_path, progress, overall_task
+                        )
+                        self.display_scaling_results({test_name: results["scaling"][test_name]})
 
         return BenchmarkSuite(
             regular_tests=results["regular"],
@@ -847,7 +875,10 @@ Categories:
                     print(f"Invalid thread count: {args.threads}")
                     sys.exit(1)
 
-        runner = BenchmarkRunner(iterations=args.iterations)
+        runner = BenchmarkRunner(
+            iterations=args.iterations,
+            category=args.category
+        )
 
         # Set test filter if specific tests requested
         if args.tests:
