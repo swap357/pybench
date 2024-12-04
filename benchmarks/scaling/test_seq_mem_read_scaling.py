@@ -87,7 +87,7 @@ def main():
         "metadata": metadata,
         "baseline": {
             "duration": round(baseline_duration, 4),
-            "bandwidth_MB_s": baseline_bandwidth,
+            "read_throughput_MB_s": baseline_bandwidth,
             "result": baseline_result,
             "total_bytes": total_bytes
         },
@@ -103,8 +103,8 @@ def main():
         
         # Calculate dependent variables
         speedup = baseline_duration / duration
-        bandwidth = total_bytes / (duration * 1024 * 1024)
-        bandwidth_per_thread = bandwidth / num_threads
+        read_throughput = total_bytes / (duration * 1024 * 1024)
+        read_throughput_per_thread = read_throughput / num_threads
         efficiency = speedup / num_threads
         
         test_result = {
@@ -117,8 +117,8 @@ def main():
             "speedup": speedup,
             
             # Memory bandwidth metrics
-            "bandwidth_MB_s": bandwidth,
-            "bandwidth_per_thread_MB_s": bandwidth_per_thread,
+            "read_throughput_MB_s": read_throughput,
+            "read_throughput_per_thread_MB_s": read_throughput_per_thread,
             "efficiency": efficiency,
             
             # Control/validation variables
