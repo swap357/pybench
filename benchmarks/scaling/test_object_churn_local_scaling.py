@@ -98,7 +98,7 @@ def main():
     }
     
     # Scaling tests
-    thread_counts = [1, 2, 4, 8, 16, 32]
+    thread_counts = [2, 4, 8, 16, 32]
     
     for num_threads in thread_counts:
         iterations_per_thread = base_iterations // num_threads
