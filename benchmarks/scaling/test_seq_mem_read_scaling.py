@@ -81,13 +81,13 @@ def main():
     baseline_result = memory_intensive(data, base_iterations)
     baseline_duration = time.perf_counter() - start
     
-    baseline_bandwidth = total_bytes / (baseline_duration * 1024 * 1024)
+    baseline_read_throughput = total_bytes / (baseline_duration * 1024 * 1024)
     
     results = {
         "metadata": metadata,
         "baseline": {
             "duration": round(baseline_duration, 4),
-            "read_throughput_MB_s": baseline_bandwidth,
+            "read_throughput_MB_s": baseline_read_throughput,
             "result": baseline_result,
             "total_bytes": total_bytes
         },
@@ -127,7 +127,7 @@ def main():
             
             # Additional metrics
             "bytes_per_thread": total_bytes / num_threads,
-            "theoretical_max_bandwidth_MB_s": baseline_bandwidth * num_threads
+            "theoretical_max_read_throughput_MB_s": baseline_read_throughput * num_threads
         }
         
         results["scaling_tests"].append(test_result)
