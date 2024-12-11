@@ -45,41 +45,8 @@ def test_thread_affinity():
     """
 ```
 
-## 2. Specialization Impact
 
-### Concept
-Specialization allows Python to optimize code paths for specific types and patterns. No-GIL Python currently disables some specializations for thread safety.
-
-### Visual Representation
-```
-Specialized Code Path:
-                    ┌─► [Int Add]
-[Add Operation] ────┼─► [Float Add]
-                    └─► [Generic Add]
-
-No-GIL (Current):
-[Add Operation] ────────► [Generic Add]
-
-Performance Impact:
-Specialized:    █████████░░░░░  (faster)
-Non-Specialized:█████████████░░ (slower)
-█ = execution time
-```
-
-### What We're Testing
-```python
-# Specialized case (normal Python)
-x: int = 1
-y: int = 2
-result = x + y  # Uses specialized int addition
-
-# Non-specialized case (no-GIL Python)
-x: Any = 1
-y: Any = 2
-result = x + y  # Uses generic addition path
-```
-
-## 3. False Sharing
+## 2. False Sharing
 
 ### Concept
 False sharing occurs when threads access different variables that happen to be on the same cache line, causing unnecessary cache coherency traffic.
