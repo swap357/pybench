@@ -104,7 +104,7 @@ class BenchmarkRunner:
         'baseline',
         'memory/ordering',
         'memory/objchurn',
-        'specialization',
+        'vectorization',
         'bytecode',
         'gil'
     ]
