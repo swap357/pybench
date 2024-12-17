@@ -24,9 +24,13 @@ def vector_intensive(size, iterations):
     - Dot product (SVE2 optimized)
     - Vector comparisons (SVE2 predicates)
     """
-    results = []
+    if iterations <= 0:
+        return 0.0, 0.0
+        
+    total_duration = 0.0
+    final_result = 0.0
     
-    for _ in range(iterations):
+    for i in range(iterations):
         # Create input arrays
         a = np.random.random(size).astype(np.float32)
         b = np.random.random(size).astype(np.float32)
@@ -46,20 +50,30 @@ def vector_intensive(size, iterations):
         g = np.minimum(a, b)
         
         # 4. Final reduction to prevent optimization
-        result = float(e + np.sum(d) + np.sum(f) + np.sum(g))
+        final_result = float(e + np.sum(d) + np.sum(f) + np.sum(g))
         
         duration = time.perf_counter() - start
-        results.append((duration, result))
+        total_duration += duration
     
     # Return average duration and final result
-    avg_duration = sum(r[0] for r in results) / len(results)
-    final_result = results[-1][1]
-    return avg_duration, final_result
+    return total_duration / iterations, final_result
 
 def thread_worker(size, iterations, results, index):
     """Worker function for threads"""
-    duration, result = vector_intensive(size, iterations)
-    results[index] = {"duration": duration, "result": result}
+    try:
+        duration, result = vector_intensive(size, iterations)
+        results[index] = {
+            "duration": duration,
+            "result": result,
+            "success": True
+        }
+    except Exception as e:
+        results[index] = {
+            "duration": 0.0,
+            "result": 0.0,
+            "success": False,
+            "error": str(e)
+        }
 
 def main():
     # Test configuration
@@ -67,10 +81,13 @@ def main():
     base_iterations = 5
     
     # Baseline measurement (single-threaded)
-    start = time.perf_counter()
-    baseline_results = [{}]
+    baseline_results = [None]
     thread_worker(array_size, base_iterations, baseline_results, 0)
-    baseline_duration = time.perf_counter() - start
+    if not baseline_results[0].get("success", False):
+        print("Baseline measurement failed:", baseline_results[0].get("error"))
+        return 1
+        
+    baseline_duration = baseline_results[0]["duration"] * base_iterations
     
     # Run scaling tests
     thread_counts = [2, 4, 8, 16, 32]
@@ -78,8 +95,8 @@ def main():
     
     for num_threads in thread_counts:
         threads = []
-        test_results = [{} for _ in range(num_threads)]
-        iterations_per_thread = base_iterations // num_threads
+        test_results = [None] * num_threads
+        iterations_per_thread = max(1, base_iterations // num_threads)
         
         start = time.perf_counter()
         
@@ -95,6 +112,13 @@ def main():
             t.join()
             
         duration = time.perf_counter() - start
+        
+        # Check for thread failures
+        failed_threads = [i for i, r in enumerate(test_results) if not r.get("success", False)]
+        if failed_threads:
+            print(f"Threads {failed_threads} failed in test with {num_threads} threads")
+            continue
+            
         speedup = baseline_duration / duration
         
         # Calculate average thread duration
