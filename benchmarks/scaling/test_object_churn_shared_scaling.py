@@ -18,7 +18,7 @@ class TestObject:
         self.value = value
         # List overhead: 56 bytes (empty list)
         # Integer array: 100 integers × 8 bytes = 800 bytes
-        # Total object size: ~872 bytes (56 + 800 + object overhead + value attr)
+        # Total object size: 920 bytes (56 + 800 + object overhead + value attr)
         self.data = [i for i in range(100)]
 
 class SharedObjectPool:
