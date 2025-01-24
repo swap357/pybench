@@ -1,6 +1,10 @@
 """
 Thread scaling test for memory-bound operations.
 Measures memory bandwidth scaling across threads.
+Matches lmbench methodology for comparison:
+- 512MB data size
+- Pure sequential read pattern
+- Multiple warmup and measurement iterations
 """
 import time
 import sys
@@ -14,126 +18,156 @@ def is_free_threading_enabled():
     """Check if running on free-threading Python build"""
     return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
-def memory_intensive(data, iterations):
-    """Memory-intensive operation"""
+def memory_intensive(data, warmup_iters=5, measure_iters=5):
+    """
+    Memory-intensive operation matching lmbench methodology:
+    - Pure sequential read pattern
+    - Warmup iterations to stabilize
+    - Multiple measurement iterations
+    """
     result = 0
-    for _ in range(iterations):
+    
+    # Warmup phase
+    for _ in range(warmup_iters):
         for x in data:
             result += x
-    return result
+    
+    # Measurement phase
+    times = []
+    for _ in range(measure_iters):
+        start = time.perf_counter()
+        for x in data:
+            result += x
+        duration = time.perf_counter() - start
+        times.append(duration)
+    
+    # Return best timing and result
+    return min(times), result
 
-def thread_worker(data, iterations, results, index):
+def thread_worker(data, warmup_iters, measure_iters, results, index):
     """Worker function for threads"""
-    result = memory_intensive(data, iterations)
-    results[index] = result
+    try:
+        duration, result = memory_intensive(data, warmup_iters, measure_iters)
+        results[index] = {
+            "duration": duration,
+            "result": result,
+            "success": True
+        }
+    except Exception as e:
+        results[index] = {
+            "error": str(e),
+            "success": False
+        }
 
-def run_threaded_test(num_threads, data, iterations_per_thread):
+def run_threaded_test(num_threads, data, warmup_iters, measure_iters):
     """Run memory operations across multiple threads"""
     threads = []
-    results = [0] * num_threads
+    results = [None] * num_threads
     
     start = time.perf_counter()
     
     for i in range(num_threads):
         t = threading.Thread(
             target=thread_worker,
-            args=(data, iterations_per_thread, results, i)
+            args=(data, warmup_iters, measure_iters, results, i)
         )
         threads.append(t)
         t.start()
     
     for t in threads:
         t.join()
+    
+    # Check for failures
+    failed_threads = [i for i, r in enumerate(results) if not r.get("success", False)]
+    if failed_threads:
+        raise RuntimeError(f"Threads {failed_threads} failed")
         
-    duration = time.perf_counter() - start
-    return duration, sum(results)
+    # Use best thread timing as overall timing (like lmbench)
+    best_duration = min(r["duration"] for r in results)
+    total_result = sum(r["result"] for r in results)
+    return best_duration, total_result
 
 def main():
-    # Test configuration - control variables
-    array_size = 100_000  # Size of data array
-    base_iterations = 100  # Base number of iterations
     element_size = 8  # Size of double in bytes
+    target_data_size = 512 * 1024 * 1024
+    array_size = target_data_size // element_size
+    warmup_iterations = 5
+    measure_iterations = 5
     
     # Test metadata
     metadata = {
         "test_name": "memory_bandwidth_scaling",
         "test_type": "memory_bound",
-        "description": "Measures memory bandwidth scaling with thread count",
+        "description": "Memory bandwidth scaling",
         "timestamp": datetime.now().isoformat(),
         "free_threading": is_free_threading_enabled(),
         "python_version": sys.version,
-        
-        # Control variables
         "control_vars": {
             "array_size": array_size,
-            "base_iterations": base_iterations,
+            "warmup_iterations": warmup_iterations,
+            "measure_iterations": measure_iterations,
             "element_size_bytes": element_size,
-            "total_array_size_MB": (array_size * element_size) / (1024 * 1024)
+            "total_data_size_MB": target_data_size / (1024 * 1024)
         }
     }
     
-    # Create test data
+    print("Initializing 512MB test data...", file=sys.stderr)
     data = array.array('d', range(array_size))
-    total_bytes = array_size * element_size * base_iterations
+    total_bytes = array_size * element_size
     
-    # Baseline measurement
-    start = time.perf_counter()
-    baseline_result = memory_intensive(data, base_iterations)
-    baseline_duration = time.perf_counter() - start
-    
-    baseline_read_throughput = total_bytes / (baseline_duration * 1024 * 1024)
+    print("Running baseline measurement...", file=sys.stderr)
+    baseline_duration, baseline_result = memory_intensive(
+        data, warmup_iterations, measure_iterations
+    )
+    baseline_bandwidth = total_bytes / (baseline_duration * 1024 * 1024)
     
     results = {
         "metadata": metadata,
         "baseline": {
             "duration": round(baseline_duration, 4),
-            "read_throughput_MB_s": baseline_read_throughput,
+            "bandwidth_MB_s": round(baseline_bandwidth, 2),
             "result": baseline_result,
             "total_bytes": total_bytes
         },
         "scaling_tests": []
     }
     
-    # Scaling tests
-    thread_counts = [2, 4, 8, 16, 32]  # Independent variable
+    # Test increasing thread counts
+    thread_counts = [2, 4, 8, 16, 32]
     
+    print("Running scaling tests...", file=sys.stderr)
     for num_threads in thread_counts:
-        iterations_per_thread = base_iterations // num_threads
-        duration, result = run_threaded_test(num_threads, data, iterations_per_thread)
+        print(f"Testing with {num_threads} threads...", file=sys.stderr)
         
-        # Calculate dependent variables
-        speedup = baseline_duration / duration
-        read_throughput = total_bytes / (duration * 1024 * 1024)
-        read_throughput_per_thread = read_throughput / num_threads
-        efficiency = speedup / num_threads
-        
-        test_result = {
-            # Independent variables
-            "threads": num_threads,
-            "iterations_per_thread": iterations_per_thread,
+        try:
+            duration, result = run_threaded_test(
+                num_threads, data, warmup_iterations, measure_iterations
+            )
             
-            # Primary dependent variables
-            "duration": round(duration, 4),
-            "speedup": speedup,
+            # Calculate metrics
+            bandwidth = total_bytes / (duration * 1024 * 1024)
+            speedup = baseline_duration / duration
+            efficiency = speedup / num_threads
             
-            # Memory bandwidth metrics
-            "read_throughput_MB_s": read_throughput,
-            "read_throughput_per_thread_MB_s": read_throughput_per_thread,
-            "efficiency": efficiency,
+            test_result = {
+                "threads": num_threads,
+                "duration": round(duration, 4),
+                "bandwidth_MB_s": round(bandwidth, 2),
+                "speedup": round(speedup, 2),
+                "efficiency": round(efficiency, 2),
+                "bandwidth_per_thread_MB_s": round(bandwidth / num_threads, 2),
+                "result": result,
+                "peak_bandwidth_MB_s": round(baseline_bandwidth * num_threads, 2)
+            }
             
-            # Control/validation variables
-            "total_bytes": total_bytes,
-            "result": result,
+            results["scaling_tests"].append(test_result)
             
-            # Additional metrics
-            "bytes_per_thread": total_bytes / num_threads,
-            "theoretical_max_read_throughput_MB_s": baseline_read_throughput * num_threads
-        }
-        
-        results["scaling_tests"].append(test_result)
+        except Exception as e:
+            print(f"Error in {num_threads} thread test: {e}", file=sys.stderr)
+            continue
     
     # Output JSON to stdout
-    print(json.dumps(results))
+    print(json.dumps(results, indent=2))
     return 0
 
 if __name__ == "__main__":
