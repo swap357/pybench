@@ -132,8 +132,8 @@ def main():
         "scaling_tests": []
     }
     
-    # Test increasing thread counts
-    thread_counts = [2, 4, 8, 16, 32]
+    # Test increasing thread counts to match lmbench testing range
+    thread_counts = [1, 2, 4, 8, 16, 32, 48, 60, 64, 72, 96, 112, 128]
     
     print("Running scaling tests...", file=sys.stderr)
     for num_threads in thread_counts:
@@ -146,8 +146,8 @@ def main():
             
             # Calculate metrics
             bandwidth = total_bytes / (duration * 1024 * 1024)
-            speedup = baseline_duration / duration
-            efficiency = speedup / num_threads
+            speedup = baseline_duration / duration if num_threads > 1 else 1.0
+            efficiency = speedup / num_threads if num_threads > 1 else 1.0
             
             test_result = {
                 "threads": num_threads,
