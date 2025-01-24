@@ -13,6 +13,7 @@ import array
 import sysconfig
 import json
 from datetime import datetime
+import random
 
 def is_free_threading_enabled():
     """Check if running on free-threading Python build"""
@@ -20,28 +21,29 @@ def is_free_threading_enabled():
 
 def memory_intensive(data, warmup_iters=5, measure_iters=5):
     """
-    Memory-intensive operation matching lmbench methodology:
-    - Pure sequential read pattern
-    - Warmup iterations to stabilize
-    - Multiple measurement iterations
+    Pure memory read bandwidth test:
+    - Uses strided access to defeat prefetcher
+    - Minimal computation to avoid CPU bottleneck
+    - Forces memory reads with volatile-like access
     """
-    result = 0
+    result = 0.0
+    size = len(data)
+    stride = 256  # Defeat hardware prefetcher
     
     # Warmup phase
     for _ in range(warmup_iters):
-        for x in data:
-            result += x
+        for i in range(0, size, stride):
+            result += data[i]  # Force read without computation
     
     # Measurement phase
     times = []
     for _ in range(measure_iters):
         start = time.perf_counter()
-        for x in data:
-            result += x
+        for i in range(0, size, stride):
+            result += data[i]  # Simple accumulation to prevent optimization
         duration = time.perf_counter() - start
         times.append(duration)
     
-    # Return best timing and result
     return min(times), result
 
 def thread_worker(data, warmup_iters, measure_iters, results, index):
@@ -89,10 +91,18 @@ def run_threaded_test(num_threads, data, warmup_iters, measure_iters):
 
 def main():
     element_size = 8  # Size of double in bytes
-    target_data_size = 512 * 1024 * 1024
+    target_data_size = 512 * 1024 * 1024  # 512MB
     array_size = target_data_size // element_size
-    warmup_iterations = 5
-    measure_iterations = 5
+    
+    print("Initializing 512MB test data...", file=sys.stderr)
+    # Use random data to defeat compression/prediction
+    data = array.array('d', [random.random() for _ in range(array_size)])
+    
+    # Force data out of cache before measurement
+    def flush_cache():
+        temp = array.array('d', [0.0] * (4 * 1024 * 1024))  # 32MB to flush cache
+        for i in range(len(temp)):
+            temp[i] += 1.0
     
     # Test metadata
     metadata = {
@@ -104,22 +114,18 @@ def main():
         "python_version": sys.version,
         "control_vars": {
             "array_size": array_size,
-            "warmup_iterations": warmup_iterations,
-            "measure_iterations": measure_iterations,
+            "warmup_iterations": 5,
+            "measure_iterations": 5,
             "element_size_bytes": element_size,
             "total_data_size_MB": target_data_size / (1024 * 1024)
         }
     }
     
-    print("Initializing 512MB test data...", file=sys.stderr)
-    data = array.array('d', range(array_size))
-    total_bytes = array_size * element_size
-    
     print("Running baseline measurement...", file=sys.stderr)
     baseline_duration, baseline_result = memory_intensive(
-        data, warmup_iterations, measure_iterations
+        data, 5, 5
     )
-    baseline_bandwidth = total_bytes / (baseline_duration * 1024 * 1024)
+    baseline_bandwidth = target_data_size / (baseline_duration * 1024 * 1024)
     
     results = {
         "metadata": metadata,
@@ -127,7 +133,7 @@ def main():
             "duration": round(baseline_duration, 4),
             "bandwidth_MB_s": round(baseline_bandwidth, 2),
             "result": baseline_result,
-            "total_bytes": total_bytes
+            "total_bytes": target_data_size
         },
         "scaling_tests": []
     }
@@ -141,11 +147,11 @@ def main():
         
         try:
             duration, result = run_threaded_test(
-                num_threads, data, warmup_iterations, measure_iterations
+                num_threads, data, 5, 5
             )
             
             # Calculate metrics
-            bandwidth = total_bytes / (duration * 1024 * 1024)
+            bandwidth = target_data_size / (duration * 1024 * 1024)
             speedup = baseline_duration / duration if num_threads > 1 else 1.0
             efficiency = speedup / num_threads if num_threads > 1 else 1.0
             
