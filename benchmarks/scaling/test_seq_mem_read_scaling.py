@@ -7,12 +7,8 @@ import sys
 import threading
 import array
 import sysconfig
-import json
 from datetime import datetime
-
-def is_free_threading_enabled():
-    """Check if running on free-threading Python build"""
-    return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+import json
 
 def memory_intensive(data, iterations):
     """Memory-intensive operation"""
@@ -49,91 +45,77 @@ def run_threaded_test(num_threads, data, iterations_per_thread):
     return duration, sum(results)
 
 def main():
-    # Test configuration - control variables
-    array_size = 100_000  # Size of data array
-    base_iterations = 100  # Base number of iterations
+    # Test configuration - targeting 512MB to match lmbench
     element_size = 8  # Size of double in bytes
+    target_size_mb = 512  # Target size in MB
+    array_size = int((target_size_mb * 1024 * 1024) / element_size)
+    base_iterations = 10  # Number of times to read through data
     
-    # Test metadata
-    metadata = {
-        "test_name": "memory_bandwidth_scaling",
-        "test_type": "memory_bound",
-        "description": "Measures memory bandwidth scaling with thread count",
-        "timestamp": datetime.now().isoformat(),
-        "free_threading": is_free_threading_enabled(),
-        "python_version": sys.version,
-        
-        # Control variables
-        "control_vars": {
-            "array_size": array_size,
-            "base_iterations": base_iterations,
-            "element_size_bytes": element_size,
-            "total_array_size_MB": (array_size * element_size) / (1024 * 1024)
-        }
-    }
+    print(f"Initializing {target_size_mb}MB test array...", file=sys.stderr)
     
     # Create test data
     data = array.array('d', range(array_size))
     total_bytes = array_size * element_size * base_iterations
     
-    # Baseline measurement
+    # Test metadata
+    metadata = {
+        "test_name": "memory_bandwidth_scaling",
+        "timestamp": datetime.now().isoformat(),
+        "array_size_bytes": array_size * element_size,
+        "array_size_mb": target_size_mb,
+        "iterations": base_iterations,
+        "element_size_bytes": element_size,
+        "python_version": sys.version,
+        "free_threading": bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+    }
+    
+    # Baseline measurement (single thread)
+    print("Running baseline single-thread test...", file=sys.stderr)
     start = time.perf_counter()
     baseline_result = memory_intensive(data, base_iterations)
     baseline_duration = time.perf_counter() - start
     
-    baseline_read_throughput = total_bytes / (baseline_duration * 1024 * 1024)
+    baseline_throughput = total_bytes / (baseline_duration * 1024 * 1024)  # MB/s
+    print(f"Baseline throughput: {baseline_throughput:.2f} MB/s", file=sys.stderr)
     
     results = {
         "metadata": metadata,
         "baseline": {
-            "duration": round(baseline_duration, 4),
-            "read_throughput_MB_s": baseline_read_throughput,
-            "result": baseline_result,
-            "total_bytes": total_bytes
+            "duration": baseline_duration,
+            "throughput_MB_s": baseline_throughput,
+            "result": baseline_result
         },
         "scaling_tests": []
     }
     
     # Scaling tests
-    thread_counts = [2, 4, 8, 16, 32]  # Independent variable
+    thread_counts = [1, 2, 4, 8, 16, 32, 48, 60, 64, 72, 96, 112, 128]
     
+    print("\nRunning scaling tests...", file=sys.stderr)
     for num_threads in thread_counts:
-        iterations_per_thread = base_iterations // num_threads
-        duration, result = run_threaded_test(num_threads, data, iterations_per_thread)
+        print(f"Testing with {num_threads} threads...", file=sys.stderr)
         
-        # Calculate dependent variables
+        # Run multiple times and take best result
+        best_throughput = 0
+        for run in range(3):
+            iterations_per_thread = base_iterations // num_threads
+            duration, result = run_threaded_test(num_threads, data, iterations_per_thread)
+            
+            throughput = total_bytes / (duration * 1024 * 1024)  # MB/s
+            best_throughput = max(best_throughput, throughput)
+        
         speedup = baseline_duration / duration
-        read_throughput = total_bytes / (duration * 1024 * 1024)
-        read_throughput_per_thread = read_throughput / num_threads
-        efficiency = speedup / num_threads
+        print(f"Throughput: {best_throughput:.2f} MB/s (speedup: {speedup:.2f}x)", file=sys.stderr)
         
-        test_result = {
-            # Independent variables
+        results["scaling_tests"].append({
             "threads": num_threads,
-            "iterations_per_thread": iterations_per_thread,
-            
-            # Primary dependent variables
-            "duration": round(duration, 4),
+            "throughput_MB_s": best_throughput,
             "speedup": speedup,
-            
-            # Memory bandwidth metrics
-            "read_throughput_MB_s": read_throughput,
-            "read_throughput_per_thread_MB_s": read_throughput_per_thread,
-            "efficiency": efficiency,
-            
-            # Control/validation variables
-            "total_bytes": total_bytes,
-            "result": result,
-            
-            # Additional metrics
-            "bytes_per_thread": total_bytes / num_threads,
-            "theoretical_max_read_throughput_MB_s": baseline_read_throughput * num_threads
-        }
-        
-        results["scaling_tests"].append(test_result)
+            "duration": duration
+        })
     
-    # Output JSON to stdout
-    print(json.dumps(results))
+    # Output JSON results to stdout
+    print(json.dumps(results, indent=2))
     return 0
 
 if __name__ == "__main__":
