@@ -98,16 +98,20 @@ def main():
         print(f"Testing {num_threads} threads...", file=sys.stderr)
         
         best_bw = 0
+        best_duration = float('inf')
         for _ in range(3):
             duration, _ = run_threaded_test(num_threads, src, dst, base_iterations)
             thread_bw = total_bytes / duration / 1024**3
-            best_bw = max(best_bw, thread_bw)
+            if thread_bw > best_bw:
+                best_bw = thread_bw
+                best_duration = duration
         
         results["scaling_tests"].append({
             "threads": num_threads,
             "bandwidth_gb_s": best_bw,
+            "duration": best_duration
         })
-        print(f"Bandwidth: {best_bw:.2f} GB/s",
+        print(f"Bandwidth: {best_bw:.2f} GB/s (duration: {best_duration:.3f}s)",
               file=sys.stderr)
     
     print(json.dumps(results, indent=2))
