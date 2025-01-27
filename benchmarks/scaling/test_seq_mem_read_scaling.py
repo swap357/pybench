@@ -1,6 +1,6 @@
 """
-Thread scaling test for memory-bound operations (fixed version).
-Measures ACTUAL memory bandwidth using proper data accounting.
+Thread scaling test for memory-bound operations.
+Measures memory bandwidth using data accounting.
 """
 import time
 import sys
