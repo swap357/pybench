@@ -115,11 +115,11 @@ class BenchmarkRunner:
 
     # Python versions configuration
     PYTHON_VERSIONS = {
-        "3.12.7": {"type": "baseline"},  # Marking baseline version
-        "3.13.0": {"type": "release"},
+        # "3.12.7": {"type": "baseline"},  # Marking baseline version
+        # "3.13.0": {"type": "release"},
         "3.13.0t": {"type": "experimental"},
     }
-    BASELINE_VERSION = "3.12.7"
+    BASELINE_VERSION = None
 
     def __init__(self, iterations: int = 5, profile: bool = True, category: str = 'all'):
         self.environments = []

@@ -106,12 +106,15 @@ def main():
                 best_bw = thread_bw
                 best_duration = duration
         
+        speedup = baseline_duration / best_duration
+        
         results["scaling_tests"].append({
             "threads": num_threads,
             "bandwidth_gb_s": best_bw,
-            "duration": best_duration
+            "duration": best_duration,
+            "speedup": speedup
         })
-        print(f"Bandwidth: {best_bw:.2f} GB/s (duration: {best_duration:.3f}s)",
+        print(f"Bandwidth: {best_bw:.2f} GB/s (duration: {best_duration:.3f}s, speedup: {speedup:.2f}x)",
               file=sys.stderr)
     
     print(json.dumps(results, indent=2))
