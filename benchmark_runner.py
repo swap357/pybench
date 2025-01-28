@@ -84,6 +84,7 @@ class ScalingDataPoint:
 class ScalingBenchmarkResult:
     status: str  # 'baseline', 'improved', 'degraded', 'similar'
     base_duration: float
+    base_throughput: float  # Added to store baseline throughput metric
     scaling_factor: float
     max_threads: int
     efficiency: float  # Parallel efficiency (0-1)
@@ -519,6 +520,9 @@ class BenchmarkRunner:
             scaling_result = ScalingBenchmarkResult(
                 status='baseline' if version == self.baseline_version else 'comparison',
                 base_duration=stats.mean,
+                base_throughput=latest_run['baseline'].get("graph_traversals_per_sec", 
+                         latest_run['baseline'].get("node_updates_per_sec",
+                         latest_run['baseline'].get("iterations_per_sec", 0.0))),
                 scaling_factor=max_test['speedup'],
                 max_threads=max_test['threads'],
                 efficiency=max_test['speedup'] / max_test['threads'],
@@ -636,8 +640,12 @@ class BenchmarkRunner:
                     memory_usage=point.get("memory_usage", 0.0)
                 ))
                 
-            # Calculate scaling metrics
+            # Get baseline metrics
             base_duration = baseline_data["duration"]
+            base_throughput = baseline_data.get("graph_traversals_per_sec", 
+                             baseline_data.get("ops_per_sec",
+                             baseline_data.get("steps_per_sec",
+                             baseline_data.get("bandwidth_gb_s", 0.0))))
             max_threads = scaling_tests[-1]["threads"]
             max_speedup = scaling_tests[-1]["speedup"]
             efficiency = max_speedup / max_threads
@@ -646,6 +654,7 @@ class BenchmarkRunner:
             print(f"Warning: Could not process scaling data: {e}")
             # Fallback if detailed scaling data isn't available
             base_duration = stats.mean
+            base_throughput = 0.0
             max_threads = self.num_threads
             max_speedup = 1.0
             efficiency = 1.0
@@ -654,6 +663,7 @@ class BenchmarkRunner:
         return ScalingBenchmarkResult(
             status=status,
             base_duration=base_duration,
+            base_throughput=base_throughput,  # Added baseline throughput
             scaling_factor=max_speedup,
             max_threads=max_threads,
             efficiency=efficiency,

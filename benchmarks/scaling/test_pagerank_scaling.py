@@ -154,8 +154,7 @@ def main():
         "test_type": "cpu_bound",
         "description": "Measures PageRank computation scaling across threads and processes",
         "timestamp": datetime.now().isoformat(),
-        "free_threading": is_free_threading_enabled(),  # Now uses runtime check
-        "gil_enabled": bool(getattr(sys, '_is_gil_enabled', lambda: True)()),  # Explicit GIL status
+        "free_threading": is_free_threading_enabled(),
         "python_version": sys.version,
         "control_vars": {
             "matrix_size": matrix_size,
@@ -181,7 +180,7 @@ def main():
     }
     
     # Scaling tests
-    worker_counts = [1, 2, 4, 8, 16, 32, 48, 64, 96]
+    worker_counts = [2, 4, 8, 16, 32, 48, 64, 96]
     
     for n_workers in worker_counts:
         # Thread benchmark

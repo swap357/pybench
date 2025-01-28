@@ -8,9 +8,13 @@ import sysconfig
 import json
 from datetime import datetime
 
-def is_free_threading_enabled():
-    """Check if running on free-threading Python build"""
-    return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+def is_free_threading_enabled() -> bool:
+    """Check if Python is running with free threading (GIL disabled)"""
+    # Use runtime check for GIL status
+    try:
+        return not sys._is_gil_enabled()  # Returns True if GIL is disabled
+    except AttributeError:
+        return False  # If _is_gil_enabled doesn't exist, GIL is enabled
 
 def cpu_intensive(iterations):
     """Pure CPU work under lock"""
@@ -92,7 +96,7 @@ def main():
     }
     
     # Scaling tests
-    thread_counts = [1, 2, 4, 8, 16, 32, 48, 64, 96, 112, 128]
+    thread_counts = [2, 4, 8, 16, 32, 48, 64, 96, 112, 128]
     
     for num_threads in thread_counts:
         iterations_per_thread = base_iterations // num_threads

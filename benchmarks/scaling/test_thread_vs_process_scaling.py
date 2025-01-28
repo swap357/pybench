@@ -136,7 +136,7 @@ def main():
     }
     
     # Scaling tests
-    worker_counts = [1, 2, 4, 8, 16, 32, 48, 64, 96]
+    worker_counts = [2, 4, 8, 16, 32, 48, 64, 96]
     
     for n_workers in worker_counts:
         iterations_per_worker = base_iterations // n_workers

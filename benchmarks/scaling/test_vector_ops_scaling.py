@@ -94,7 +94,7 @@ def main():
     baseline_duration = baseline_results[0]["duration"] * base_iterations
     
     # Run scaling tests
-    thread_counts = [1, 2, 4, 8, 16, 32, 48, 64, 96, 112, 128]
+    thread_counts = [2, 4, 8, 16, 32, 48, 64, 96, 112, 128]
     results = []
     
     for num_threads in thread_counts:
