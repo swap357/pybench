@@ -17,8 +17,12 @@ from typing import List, Dict, Any, Tuple
 DAMPING = 0.85
 
 def is_free_threading_enabled() -> bool:
-    """Check if Python was built with free threading enabled"""
-    return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+    """Check if Python is running with free threading (GIL disabled)"""
+    # Use runtime check for GIL status
+    try:
+        return not sys._is_gil_enabled()  # Returns True if GIL is disabled
+    except AttributeError:
+        return False  # If _is_gil_enabled doesn't exist, GIL is enabled
 
 def generate_test_matrix(size: int = 1000) -> np.ndarray:
     """Generate a sparse test matrix for PageRank"""
@@ -150,7 +154,8 @@ def main():
         "test_type": "cpu_bound",
         "description": "Measures PageRank computation scaling across threads and processes",
         "timestamp": datetime.now().isoformat(),
-        "free_threading": is_free_threading_enabled(),
+        "free_threading": is_free_threading_enabled(),  # Now uses runtime check
+        "gil_enabled": bool(getattr(sys, '_is_gil_enabled', lambda: True)()),  # Explicit GIL status
         "python_version": sys.version,
         "control_vars": {
             "matrix_size": matrix_size,
@@ -168,9 +173,9 @@ def main():
         "metadata": metadata,
         "baseline": {
             "duration": round(baseline_duration, 4),
-            "iterations_per_sec": round(num_iterations / baseline_duration, 2),
+            "graph_traversals_per_sec": round(num_iterations / baseline_duration, 2),  # One traversal per iteration
             "matrix_size": matrix_size,
-            "total_steps": num_iterations  # Added for compatibility
+            "total_steps": num_iterations
         },
         "scaling_tests": []
     }
@@ -197,13 +202,13 @@ def main():
                 "duration": round(thread_duration, 4),
                 "speedup": round(thread_speedup, 4),
                 "efficiency": round(thread_efficiency, 4),
-                "iterations_per_sec": round(num_iterations / thread_duration, 2)
+                "graph_traversals_per_sec": round(num_iterations / thread_duration, 2)
             },
             "process_results": {
                 "duration": round(process_duration, 4),
                 "speedup": round(process_speedup, 4),
                 "efficiency": round(process_efficiency, 4),
-                "iterations_per_sec": round(num_iterations / process_duration, 2)
+                "graph_traversals_per_sec": round(num_iterations / process_duration, 2)
             }
         }
         

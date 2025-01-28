@@ -12,8 +12,12 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 def is_free_threading_enabled() -> bool:
-    """Check if Python was built with free threading enabled"""
-    return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+    """Check if Python is running with free threading (GIL disabled)"""
+    # Use runtime check for GIL status
+    try:
+        return not sys._is_gil_enabled()  # Returns True if GIL is disabled
+    except AttributeError:
+        return False  # If _is_gil_enabled doesn't exist, GIL is enabled
 
 def rl_env_step(num_steps: int = 10_000) -> float:
     """
