@@ -151,7 +151,7 @@ def main():
         process_efficiency = process_speedup / n_workers
         
         test_result = {
-            "workers": n_workers,
+            "threads": n_workers,
             "thread_results": {
                 "duration": round(thread_duration, 4),
                 "worker_times": [round(t, 4) for t in thread_worker_times],
