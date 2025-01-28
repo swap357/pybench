@@ -152,6 +152,8 @@ def main():
         
         test_result = {
             "threads": n_workers,
+            "duration": round(thread_duration, 4),
+            "speedup": round(thread_speedup, 4),
             "thread_results": {
                 "duration": round(thread_duration, 4),
                 "worker_times": [round(t, 4) for t in thread_worker_times],
