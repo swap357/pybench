@@ -91,7 +91,7 @@ def main():
     }
     
     # Thread scaling tests
-    thread_counts = [2, 4, 8, 16, 32, 48, 64, 96, 112, 128]
+    thread_counts = [i for i in range(1, 193) if i in [1, 2, 4, 8, 16, 32, 64, 128] or i % 4 == 0]
     
     print("\nRunning valid scaling tests...", file=sys.stderr)
     for num_threads in thread_counts:
